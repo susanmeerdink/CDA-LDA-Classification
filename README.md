@@ -65,9 +65,10 @@ LoopFilesPullCDAVars.py
 *Accuracy Assessment
 1. Use ENVI to Extract ROI information from classified image
 2. pullingOutROIInfo.py: Reads through ENVI ASCII file (output from ROI extraction) and puts into .csv for easy reading
-3. pullingOutROIval.py: Reads through .csv of ROI information and pulls out rows that are to be used in validation
-4. calcclassificationresults.py: This code reads in ROI formated csv (formatted using pullingOutROIInfo.py) and calculates classification results including producers, users, overal, and kappa accuracy results are output to a csv
-5. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare model results use LoopFilesPullClassificationStats.py which reads through .csvs and pulls out the producers, users, overal, and kappa accuracy results are output to a csv
-6. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare CDA coefficients use LoopFilesPullCDAVars.py which reas through .csvs and pulls out CDA variables.
+3. Use python code fillingOutENVISpectralLibraryMetadata.py to fill out metadata 
+4. pullingOutROIval.py: Reads through .csv of ROI information and pulls out rows that are to be used in validation
+5. calcclassificationresults.py: This code reads in ROI formated csv (formatted using pullingOutROIInfo.py) and calculates classification results including producers, users, overal, and kappa accuracy results are output to a csv
+6. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare model results use LoopFilesPullClassificationStats.py which reads through .csvs and pulls out the producers, users, overal, and kappa accuracy results are output to a csv
+7. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare CDA coefficients use LoopFilesPullCDAVars.py which reas through .csvs and pulls out CDA variables.
 
 
