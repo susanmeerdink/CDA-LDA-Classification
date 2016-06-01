@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#####################################################################################################################\n# Susan Meerdink\n# CDA/LDA Classification\n# 6/1/2016\n# Main function, Main body, entry point\n#####################################################################################################################\n#####################################################################################################################\n## Managing and Preparing Spectral Libraries\n\n#####################################################################################################################\n## Developing CDA Coefficients\n\n#####################################################################################################################\n## LDA Classification\n\n#####################################################################################################################\n## Accuracy Assessment",
+    "created" : 1464800398131.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2819914770",
+    "id" : "B90EB2A5",
+    "lastKnownWriteTime" : 1464800910,
+    "last_content_update" : 1464800910436,
+    "path" : "R:/users/susan.meerdink/GitHub/CDA-LDA-Classification/R Version/MainFunction.R",
+    "project_path" : "MainFunction.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
