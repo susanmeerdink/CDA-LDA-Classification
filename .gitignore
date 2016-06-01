@@ -1,3 +1,8 @@
+# ENVI Files
+*.csv
+*.hdr
+*.sli
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
