@@ -8,6 +8,7 @@
 #inROI: should be your formatted ROI information with classification code results(formatted using pullingOutROIInfo.py)
 #lookup: should be separate text file that contains in the first column classification code (0,1,2,..) and
 #second column the class name (MAGF, ARGES, CEME,....) This column MUST match the metadata in the Dominant column inROI
+#The classification code MUST be sequential, but it does not matter if it starts with 0 or 1
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20131125_AVIRIS&MASTER_same_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS&MASTER_diff_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS_same_OUTPUT.csv'
