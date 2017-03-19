@@ -113,9 +113,9 @@ outlib_goodbands_Val=fulllib;
 % validlib: Your validation library read in using ReadSpecLib_wfullmeta.m
 % valid_group: pull out the group from the metadata (species, etc)
 trainlib = outlib_goodbands_Train;
-train_group = table2cell(metadata_Train(:,11)); %Pull out species for grouping - it is column 9 in metadata table
+train_group =  table2mat(metadata_Train(:,12)); %Pull out species for grouping - it is column 9 in metadata table
 validlib = outlib_goodbands_Val;
-valid_group = table2cell(metadata_Val(:,11));%Pull out species for grouping - it is column 9 in metadata table
+valid_group = metadata_Val(:,12);%Pull out species for grouping - it is column 9 in metadata table
 
 % OUTPUTS:
 % accstats: accuracy stats (overall, cappa, error matrix, producers/users, valid class(what it was classified as), valid group (truth))

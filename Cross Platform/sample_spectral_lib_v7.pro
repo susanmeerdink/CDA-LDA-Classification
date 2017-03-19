@@ -93,7 +93,7 @@ pro sample_spectral_lib_v7
   in_sli_metadata_updated.(dominant_index) = strtrim(strupcase(in_sli_metadata_updated.(dominant_index)),2)
   dominants = in_sli_metadata_updated.(dominant_index)[UNIQ(in_sli_metadata_updated.(dominant_index), SORT(in_sli_metadata_updated.(dominant_index)))]
   nf1uniq = n_elements(dominants)
-  polygon_index=where(strmatch(col_headings,'*poly*',/FOLD_CASE) eq 1)
+  polygon_index=where(strmatch(col_headings,'Polygon_ID',/FOLD_CASE) eq 1)
   ; generate output order
   polygons_in_lib = !NULL
   for i=0,nf1uniq-1 do begin
@@ -177,9 +177,10 @@ pro sample_spectral_lib_v7
     M = round((ind_limit*dominant_summary.n_polys[i])) ;Number of Polygons to be pulled out for independent validation
     len = dominant_summary.n_polys[i] ;Total number of polygons for a dominant species
     n = M
-    inds = make_array(n,1)
+
     count = 1
     WHILE n GT 0 DO BEGIN
+      inds = make_array(n,1)
       inds = round(RandomU(seed, n)*len)
       u = inds[Uniq(inds)];following expression returns a copy of the sorted array with duplicate adjacent elements removed
       n = M - N_Elements(u)
