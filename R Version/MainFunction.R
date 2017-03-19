@@ -5,13 +5,15 @@
 # Main function, Main body, entry point
 #####################################################################################################################
 #### INPUTS ####
-directory <- 'R:\\users\\susan.meerdink\\GitHub\\CDA-LDA-Classification\\R Version\\'
+#directory <- 'R:\\users\\susan.meerdink\\GitHub\\CDA-LDA-Classification\\R Version\\'
+directory <- 'H:\\users\\meerdink\\GitHub\\CDA-LDA-Classification\\R Version\\'
 specLibLoc <- 'fl111107 r08&r09&r10&r11&r12&r14 spectral library.sli' #name of the ENVI spectral library containing spectral pulled from polygons in imagery 
 metadataLoc <- 'fl111107 r08&r09&r10&r11&r12&r14 spectral library.csv' #Name of metadata associated with spectral library
 #####################################################################################################################
 #### Dependencies ####
 ##Loading R functions from RStoolbox in Github
-RStoolboxFiles <- list.files(path = "R:\\users\\susan.meerdink\\GitHub\\RStoolbox\\R", pattern = '*.R',full.names = 'TRUE')
+#RStoolboxFiles <- list.files(path = "R:\\users\\susan.meerdink\\GitHub\\RStoolbox\\R", pattern = '*.R',full.names = 'TRUE')
+RStoolboxFiles <- list.files(path = "H:\\users\\meerdink\\GitHub\\RStoolbox\\R", pattern = '*.R',full.names = 'TRUE')
 for (f in RStoolboxFiles){source(f)}
 
 #####################################################################################################################
