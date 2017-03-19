@@ -8,11 +8,12 @@
 #inROI: should be your formatted ROI information with classification code results(formatted using pullingOutROIInfo.py)
 #lookup: should be separate text file that contains in the first column classification code (0,1,2,..) and
 #second column the class name (MAGF, ARGES, CEME,....) This column MUST match the metadata in the Dominant column inROI
+#The classification code MUST be sequential, but it does not matter if it starts with 0 or 1
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20131125_AVIRIS&MASTER_same_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS&MASTER_diff_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS_same_OUTPUT.csv'
-inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20130411_AVIRIS_diff_OUTPUT.csv'
-lookup ='R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\Classification_Lookup.csv'
+inROI = 'C:\\Users\\Susan\\Downloads\\ROIvalidationOutput_smoothed.csv'
+lookup ='C:\\Users\\Susan\\Downloads\\LookupTable.csv'
 
 ############ENDINPUTS####################################
 
@@ -50,22 +51,21 @@ for line in open(inROI):
         lineAll = line.split(',') #Split the line at commas into an array
         lineAll = map(lambda lineAll: lineAll.strip(), lineAll)
         indexModel = int(lineAll[columnModel]) #Grab model classification code and thus index
-        if indexModel == 0:
+        try:
+            indexModel = indexModel - 1 #to assign value to correct index
+            indexActual = lookupStr.index(lineAll[columnActual]) #Find Actual code and thus index 
+            #indexActual = lookupStr.index(lineAll[columnActual].upper()) #Find Actual code and thus index - Uncomment this line for species codes
+
+            #Assign Value#
+            classArray[indexModel,indexActual] =  classArray[indexModel,indexActual] + 1 #Add one to this position
+        except:
             continue
-        else:
-            try:
-                indexModel = indexModel -1 #to assign value to correct index
-                indexActual = lookupStr.index(lineAll[columnActual].upper()) #Find Actual code and thus index
-                #Assign Value#
-                classArray[indexModel,indexActual] =  classArray[indexModel,indexActual] + 1 #Add one to this position
-            except:
-                continue
 
     count = count + 1 #Add value onto the count                      
 
 #Summing up Values#
-rowTotals = np.sum(classArray,axis = 0) #sum up each row
-columnTotals = np.sum(classArray,axis = 1) #sum up each column
+rowTotals = np.sum(classArray,axis = 1) #sum up each row
+columnTotals = np.sum(classArray,axis = 0) #sum up each column
 pixelTotal = np.sum(rowTotals) #Get total number of pixels
 
 #Variables for Classification User's and Producer's Accuracy#
