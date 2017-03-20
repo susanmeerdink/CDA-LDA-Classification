@@ -17,54 +17,35 @@ pro image_classify_w_lda_wo_control_file_Part2
 ; Line 4 = class column name
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;; SETTING UP ENVI/IDL ENVIRONMENT ;;;
+COMPILE_OPT STRICTARR
+envi, /restore_base_save_files
+ENVI_BATCH_INIT ;Doesn't require having ENVI open - use with stand alone IDL 64 bit
+;;; DONE SETTING UP ENVI/IDL ENVIRONMENT ;;;
+;
 ;Begin Main Program:
-close, /ALL
+;close, /ALL
 ;cfile=envi_pickfile(title='Select a Control file', filter='*.ctl')
 
 ;declare inputs
 ;;;;;;;;;;;;;;;Declare Directory for Training Library;;;;;;;;;;;;;;;;;;;;;;;
 pnameTrain = strarr(1)
-pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS\'; %Set directory
+pnameTrain = 'I:\Classification-Products\FL03\2 - CDA Variables\'; %Set directory
 ;pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS & MASTER\'; %Set directory
 ;pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\Combined\'; %Set directory
 
 ;;;;;;;;;;;;;;;Declare file name of the training library;;;;;;;;;;;;;;;;;;;;;;;
 trainlib_file = strarr(1)
-trainlib_file =  '20130411_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20130606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20131125_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20140416_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20140606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20140829_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20130411_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20130606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20131125_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20140416_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20140606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '2013&2014_Spectral_Library_AVIRIS'; %Set filename
-;trainlib_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
-trainlib_file = trainlib_file + '_train_Spectral.sli' ;Variable for CDA coefficients name
+trainlib_file =  'f140829_AVIRIS_spectral_library'; %Set filename
+LDAcoeff_file = trainlib_file + '_calibration_CDA_LDA.csv' ;Variable for CDA coefficients name
 
 ;;;;;;;;;;;;;;;Declare Directory for Image;;;;;;;;;;;;;;;;;;;;;;;
 pnameImage = strarr(1)
-pnameImage = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Images\Mosaic\'; %Set directory
+pnameImage = 'I:\AVIRIS\FL03\7 - Other Files\'; %Set directory
 
 ;;;;;;;;;;;;;;;Declare file name of image to be classified;;;;;;;;;;;;;;;;;;;;;;;
 image_file=strarr(1)
-image_file = '20130411_SBFrontRange_Mosaic'; %Set filename
-;image_file = '20130606_SBFrontRange_Mosaic'; %Set filename
-;image_file = '20131125_SBFrontRange_Mosaic'; %Set filename
-;image_file = '20140416_SBFrontRange_Mosaic'; %Set filename
-;image_file = '20140606_SBFrontRange_Mosaic'; %Set filename
-;image_file = '20140829_SBFrontRange_Mosaic'; %Set filename;
-;image_file = '20130411_SBFrontRange_Mosaic_AVIRIS&MASTER'; %Set filename
-;image_file = '20130606_SBFrontRange_Mosaic_AVIRIS&MASTER'; %Set filename
-;image_file = '20131125_SBFrontRange_Mosaic_AVIRIS&MASTER'; %Set filename
-;image_file = '20140416_SBFrontRange_Mosaic_AVIRIS&MASTER'; %Set filename
-;image_file = '20140606_SBFrontRange_Mosaic_AVIRIS&MASTER'; %Set filename
-;image_file = '20140829_SBFrontRange_Mosaic_AVIRIS&MASTER'; %Set filename
+image_file = 'FL03_f140829t01p00r12_refl_hpc18_BIL_bottomhalf'; %Set filename
 image_file = image_file + '_CDAvars'
 
 
@@ -73,9 +54,10 @@ image_file = pnameImage + image_file
 ;CDAcoeff_file=pname+CDAcoeff_file
 
 ;open CDAcoeff file and read in array (nvars cols by ngoodbands rows)
-LDAcoeffs = fltarr(n_groups,n_groups) ;change back nb to n_groups-1 for AVIRIS
+n_groups = 18
+LDAcoeffs = fltarr(n_groups,n_groups) ;change back nb to n_groups-1 for AVIRIS 
 get_lun, u1
-openr, u1, LDAcoeff_file
+openr, u1, pnameTrain + LDAcoeff_file
 readf, u1, LDAcoeffs
 close, u1
 free_lun, u1
@@ -102,7 +84,7 @@ If interleave eq 0 then begin
         curr_line[*,b]= envi_get_data(dims=[-1L,0,imgns-1,l,l],fid=img_fid,pos=b)
       endfor
       ;apply bbl
-      curr_line_data=curr_line[*,where(bbl eq 1)]   ;n samples x m bands
+      curr_line_data=curr_line[*,where(img_bbl eq 1)]   ;n samples x m bands
       ngoodbands = n_elements(curr_line_data[0,*])
 ;      ;multiply CDA coeffs through to get CDA variables
 ;      trans_CDAcoeffs=transpose(CDAcoeffs)   ;now m bands x p functions
@@ -135,10 +117,12 @@ If interleave eq 0 then begin
 endif else begin
     ;use envi_get_slice for line by line
     curr_line=fltarr(imgns,imgnb)
-    goodbands=where(bbl eq 1)  ;apply bbl before reading data in
-    ngoodbands=n_elements(goodbands)
+    ;goodbands=where(img_bbl eq 1)  ;apply bbl before reading data in
+    goodbands=make_array(1,imgnb,VALUE = 1)  ;apply bbl before reading data in
+    ;ngoodbands=n_elements(imgnb)
+    ngoodbands=imgnb
     for l=0,imgnl-1 do begin      ;for each line in the image
-      curr_line=envi_get_slice(/BIL,line=l,fid=img_fid,pos=goodbands,xs=0,xe=imgns-1)  ;n samples x m bands
+      curr_line_data=envi_get_slice(/BIL,line=l,fid=img_fid,pos=goodbands,xs=0,xe=imgns-1)  ;n samples x m bands
 ;     ;ignore background pixels in the line
       goodpix=where(total(curr_line_data,2)ne 0)
       if total(goodpix) eq -1 then class_image[*,l]=0 else begin
@@ -151,7 +135,7 @@ endif else begin
         LDAscore=fltarr(n_groups)     ;vector of LDA scores for each class
         LDAvals=fltarr(n_groups)    ;LDA values for each variable + a constant
         curr_pix_spectrum=fltarr(ngoodbands) 
-        curr_pix_spectrum=curr_line[goodpix[p],*] ;current pixel's CDA variables
+        curr_pix_spectrum=curr_line_data[goodpix[p],*] ;current pixel's CDA variables
         for g=0,n_groups-1 do begin
           LDAvals[1:ngoodbands]=curr_pix_spectrum*LDAcoeffs[g,1:ngoodbands]
           LDAvals[0]=LDAcoeffs[g,0]
@@ -161,7 +145,7 @@ endif else begin
         maxscore=max(LDAscore)
         pix_class_ind=where(LDAscore eq maxscore)
         class_image[p,l]=pix_class_ind+1   ;add one because 0=unclassified  
-		lda_score_image[p,l,*] = LDAscore ;record the LDA score for each class
+        lda_score_image[p,l,*] = LDAscore ;record the LDA score for each class
       endfor
       endelse
     endfor
@@ -170,10 +154,11 @@ endelse
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; WRITE OUTPUT ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;create a new classification image & notes
 outfile = image_file+'_class'
-notes='CDA/LDA classification results using '+trainlib_file+' as training data. Training accuracy was '+OA+'%.'
+notes='CDA/LDA classification results using '+trainlib_file+' as training data.'
 
 ;write output image array to new class image
 classlist_out=strarr(n_groups+1)
+classlist = ['ADFA','AGRES','ARCA-SALE','ARGL','BAPI','BRNI','CECU','CEME','CESP','CISP','ERFA','MAGF','PISA','PLRA','QUDO','ROCK','SOIL','UMCA']
 classlist_out[1:n_groups]=classlist
 classlist_out[0]='unclassified'
 file_type=envi_file_type('ENVI Classification')
@@ -201,10 +186,7 @@ envi_write_envi_file, lda_score_image, bnames = classlist, nb=n_groups, nl=imgnl
 outscores_hdr=outscores+'.hdr'
 envi_setup_head,data_type=4,bnames=classlist,file_type=file_type1,fname=outscores_hdr,$$
    interleave=0,map_info=img_map_info,nb=n_groups,nl=imgnl,ns=imgns,offset=0,/WRITE
-
-
    
 print,'Image classified'
-
 
 end

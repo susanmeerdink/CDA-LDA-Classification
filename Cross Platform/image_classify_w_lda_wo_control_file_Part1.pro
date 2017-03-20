@@ -25,27 +25,14 @@ close, /ALL
 ;declare inputs
 ;;;;;;;;;;;;;;;Declare Directory for Training Library;;;;;;;;;;;;;;;;;;;;;;;
 pnameTrain = strarr(1)
-pnameTrain = 'I:\Classification-Products\FL03\1 - Spectral Library\'; %Set directory
+pnameTrain = 'I:\Classification-Products\FL03\2 - CDA Variables\'; %Set directory
 ;pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS & MASTER\'; %Set directory
 ;pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\Combined\'; %Set directory
 
 ;;;;;;;;;;;;;;;Declare file name of the training library;;;;;;;;;;;;;;;;;;;;;;;
 trainlib_file = strarr(1)
 trainlib_file =  'f140829_AVIRIS_spectral_library'; %Set filename
-;trainlib_file =  '20130606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20131125_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20140416_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20140606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20140829_Spectral_Library_AVIRIS_sorted'; %Set filename
-;trainlib_file =  '20130411_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20130606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20131125_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20140416_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20140606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;trainlib_file =  '2013&2014_Spectral_Library_AVIRIS'; %Set filename
-;trainlib_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
-trainlib_file = trainlib_file + '_CDAvars_CDAcoeffs' ;Variable for CDA coefficients name
+trainlib_file = trainlib_file + '_calibration_CDA.sli' ;Variable for CDA coefficients name
 
 ;;;;;;;NEED FOR Part 2 NOT Part 1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;Declare Directory for Image;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,11 +112,13 @@ for i = 0L, nspec-1 do begin
   temp = strsplit(metadata_lines(i), ',', /extract)
   specclass(i) = temp(key_col)
   specclass(i)=strtrim(specclass(i),2)
+  print,specclass(i)
 endfor
 
 ;Create a numeric index for the class & determine number of classes
 classlist=specclass[uniq(specclass)]          ;string vector of unique classes in the training data
 ;classlist = ['ADFA', 'ARCA-SALE', 'ARGL', 'BAPI', 'BRNI', 'CECU', 'CEME', 'CESP' ,'CISP', 'ERFA', 'EUSP', 'IRGR', 'MAGF' ,'MARSH' ,'PEAM' ,'PISA' ,'PLRA', 'QUAG', 'QUDO', 'ROCK' ,'SOIL', 'UMCA' ,'AGRES', 'URBAN']
+classlist = ['ADFA','AGRES','ARCA-SALE','ARGL','BAPI','BRNI','CECU','CEME','CESP','CISP','ERFA','MAGF','PISA','PLRA','QUDO','ROCK','SOIL','UMCA']
 n_groups=n_elements(classlist)
 classlist_ind=indgen(n_groups)     ;numeric index for each class
 ;specclass_ind = fltarr(nspec,1)
@@ -160,7 +149,7 @@ trainspec_wclass = trainspec   ; assign to Keely's variable she uses below
 print, 'starting lda'
 IMSL_DISCR_ANALYSIS,$ ;(http://www.exelisvis.com/docs/IMSL_DISCR_ANALYSIS.html)
   trainspec_wclass,$ ;Two-dimensional array of size n_rows by n_variables + 1 containing the data in n_rows and n_variables = number of variables to be used in the discrimination. 
-  (n_groups-1),$ ;Number of groups in the data.
+  (n_groups),$ ;Number of groups in the data.(n_groups-1)
   coefficients = LDAcoeffs,$ ;Named variable into which a two-dimensional array of size n_groups by (n_variables + 1) containing the linear discriminant coefficients is stored.
   class_member = tclass,$ ;Named variable into which an one-dimensional integer array of length n_rows containing the group to which the observation was classified is stored.
   class_table = terrmat, $ ;Named variable into which a two-dimensional array of size n_groups by n_groups containing the classification table is stored. 

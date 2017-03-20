@@ -27,42 +27,17 @@ close, /ALL
 pname=strarr(1)
 ;pname = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS\'; %Set directory
 ;pname = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS & MASTER\'; %Set directory
-pname = 'I:\Classification-Products\FL03\1 - Spectral Library\'; %Set directory
+pname = 'I:\Classification-Products\FL03\2 - CDA Variables\'; %Set directory
 
 ;;;;;;;;;;;;;;;Declare filename of endmember library;;;;;;;;;;;;;;;;;;;;;;;
 EMlib_file = strarr(1)
-;EMlib_file =  '20130411_Spectral_Library_AVIRIS_sorted'; %Set filename
-;EMlib_file =  '20130606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;EMlib_file =  '20131125_Spectral_Library_AVIRIS_sorted'; %Set filename
-;EMlib_file =  '20140416_Spectral_Library_AVIRIS_sorted'; %Set filename
-;EMlib_file =  '20140606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;EMlib_file =  '20140829_Spectral_Library_AVIRIS_sorted'; %Set filename
-;EMlib_file =  '20130411_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;EMlib_file =  '20130606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;EMlib_file =  '20131125_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;EMlib_file =  '20140416_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;EMlib_file =  '20140606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;EMlib_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 EMlib_file =  'f140829_AVIRIS_spectral_library'; %Set filename
-;EMlib_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
+
 EMlib_file = EMlib_file + '_calibration.sli' ;Variable for CDA coefficients name
 
 ;;;;;;;;;;;;;;;Declare filename of CDA Coefficients File;;;;;;;;;;;;;;;;;;;;;;;
 CDAcoeff_file = strarr(1)
-;CDAcoeff_file =  '20130411_Spectral_Library_AVIRIS_sorted'; %Set filename
-;CDAcoeff_file =  '20130606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;CDAcoeff_file =  '20131125_Spectral_Library_AVIRIS_sorted'; %Set filename
-;CDAcoeff_file =  '20140416_Spectral_Library_AVIRIS_sorted'; %Set filename
-;CDAcoeff_file =  '20140606_Spectral_Library_AVIRIS_sorted'; %Set filename
-;CDAcoeff_file =  '20140829_Spectral_Library_AVIRIS_sorted'; %Set filename
-;CDAcoeff_file =  '20130411_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;CDAcoeff_file =  '20130606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;CDAcoeff_file =  '20131125_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;CDAcoeff_file =  '20140416_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;CDAcoeff_file =  '20140606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-;CDAcoeff_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 CDAcoeff_file =  'f140829_AVIRIS_spectral_library'; %Set filename
-;CDAcoeff_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
 CDAcoeff_file = CDAcoeff_file + '_CDAvars_CDAcoeffs.csv' ;Variable for CDA coefficients name
 
 ;;;;;;;;;;;;;;;Declare class column name;;;;;;;;;;;;;;;;;;;;;;;
@@ -133,7 +108,7 @@ for x=0,n_groups-1 do begin
 endfor
 
 ;open CDAcoeff file and read in array (nvars cols by ngoodbands rows)
-CDAcoeffs = fltarr(n_groups-2,n_elements(where(bbl eq 1)))
+CDAcoeffs = fltarr(n_groups-1,n_elements(where(bbl eq 1)))
 ;CDAcoeffs=fltarr(n_groups-1,n_elements(where(bbl eq 1))) ;Original
 get_lun, u1
 openr, u1, CDAcoeff_file
@@ -254,14 +229,14 @@ nvars=n_elements(EM_canon_vars[*,1])
 ;    lookup[*,i] = [r,g,b] 
 ;  endfor
 
- outlib = EMlib_filebase + '_' + coeff_name +'.sli'
+ outlib = EMlib_filebase + '_CDA.sli'
   openw,1,outlib
   writeu,1,EM_canon_vars
   close,1
-  new_head_name = EMlib_filebase+'_'+coeff_name+'.hdr'
+  new_head_name = EMlib_filebase+ '_CDA.hdr'
   file_type=envi_file_type('ENVI Spectral Library')
   envi_setup_head, fname=new_head_name,ns=nvars, nl=nspec, nb=1, spec_names=specnames, data_type=data_type,$
-   bbl=bbl,interleave=interleave, wl=wl, offset=offset, file_type=file_type, /write
+   interleave=interleave, file_type=file_type, /write
       
 ;;create header with all info including EMing accuracy
 ;outfile_hdr=outfile+'.hdr'

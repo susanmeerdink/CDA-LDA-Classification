@@ -24,7 +24,7 @@ pnameCDAFile = 'I:\Classification-Products\FL03\2 - CDA Variables\'; %Set direct
 
 ;;;;;;;;;;;;;;;Declare FileName;;;;;;;;;;;;;;;;;;;;;;;
 image_file = strarr(1) ;Variable for image name
-image_file = 'FL03_f140829t01p00r12_refl_hpc18_v1_ResizePlusBorder_fr_5_REGlinear_Regis_Cor'; %Set filename
+image_file = 'FL03_f140829t01p00r12_refl_hpc18_BIL_bottomhalf'; %Set filename
 
 ;Other inputs
 CDAcoeff_file =  'f140829_AVIRIS_spectral_library'; %Set filename
