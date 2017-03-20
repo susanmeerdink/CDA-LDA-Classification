@@ -124,28 +124,46 @@ endif else begin
     for l=0,imgnl-1 do begin      ;for each line in the image
       curr_line_data=envi_get_slice(/BIL,line=l,fid=img_fid,pos=goodbands,xs=0,xe=imgns-1)  ;n samples x m bands
 ;     ;ignore background pixels in the line
-      goodpix=where(total(curr_line_data,2)ne 0)
-      if total(goodpix) eq -1 then class_image[*,l]=0 else begin
-      ngoodpix=n_elements(goodpix)
-      ;      ;multiply CDA coeffs through to get CDA variables
-;      trans_CDAcoeffs=transpose(CDAcoeffs)   ;now m bands x p functions
-;      curr_line_CDAvars=curr_line # trans_CDAcoeffs   ;n samples x p variables
-      ;multiply LDA coeffs through get a classification score for each class
-      for p=0,ngoodpix-1 do begin        ;for each pixel
-        LDAscore=fltarr(n_groups)     ;vector of LDA scores for each class
-        LDAvals=fltarr(n_groups)    ;LDA values for each variable + a constant
-        curr_pix_spectrum=fltarr(ngoodbands) 
-        curr_pix_spectrum=curr_line_data[goodpix[p],*] ;current pixel's CDA variables
-        for g=0,n_groups-1 do begin
-          LDAvals[1:ngoodbands]=curr_pix_spectrum*LDAcoeffs[g,1:ngoodbands]
-          LDAvals[0]=LDAcoeffs[g,0]
-          LDAscore[g]=total(LDAvals)
-        endfor
-        ;determine class membership based on highest LDA score
-        maxscore=max(LDAscore)
-        pix_class_ind=where(LDAscore eq maxscore)
-        class_image[p,l]=pix_class_ind+1   ;add one because 0=unclassified  
-        lda_score_image[p,l,*] = LDAscore ;record the LDA score for each class
+      for p = 0,imgns-1 do begin ;Loop through the pixels
+        pixValue = curr_line_data[p,*] ;current pixel's CDA variables
+        if total(pixValue) EQ 0 then begin ;If it is a border pixel all values should be zero and sum to zero, don't classify
+          class_image[p,l]= 0   ;Because 0=unclassified
+          lda_score_image[p,l,*] = make_array(n_groups,VALUE = 0) ;record the LDA score for each class
+        endif else begin ;If it isn't a border pixel classify
+          LDAscore = fltarr(n_groups)     ;vector of LDA scores for each class
+          LDAvals = fltarr(n_groups)    ;LDA values for each variable + a constant
+          curr_pix_spectrum=curr_line_data[p,*] ;current pixel's CDA variables
+          for g=0,n_groups-1 do begin
+            LDAvals[1:ngoodbands]=curr_pix_spectrum*LDAcoeffs[g,1:ngoodbands]
+            LDAvals[0]=LDAcoeffs[g,0]
+            LDAscore[g]=total(LDAvals)
+          endfor
+          ;determine class membership based on highest LDA score
+          maxscore=max(LDAscore)
+          pix_class_ind=where(LDAscore eq maxscore)
+          class_image[p,l]=pix_class_ind+1   ;add one because 0=unclassified
+          lda_score_image[p,l,*] = LDAscore ;record the LDA score for each class
+        endelse
+        
+      ;;;;OLD CODE
+;      goodpix=where(total(curr_line_data,2)ne 0)
+;      if total(goodpix) eq -1 then class_image[*,l]=0 else begin
+;      ngoodpix=n_elements(goodpix)
+;      for p=0,ngoodpix-1 do begin        ;for each pixel
+;        LDAscore=fltarr(n_groups)     ;vector of LDA scores for each class
+;        LDAvals=fltarr(n_groups)    ;LDA values for each variable + a constant
+;        curr_pix_spectrum=fltarr(ngoodbands) 
+;        curr_pix_spectrum=curr_line_data[goodpix[p],*] ;current pixel's CDA variables
+;        for g=0,n_groups-1 do begin
+;          LDAvals[1:ngoodbands]=curr_pix_spectrum*LDAcoeffs[g,1:ngoodbands]
+;          LDAvals[0]=LDAcoeffs[g,0]
+;          LDAscore[g]=total(LDAvals)
+;        endfor
+;        ;determine class membership based on highest LDA score
+;        maxscore=max(LDAscore)
+;        pix_class_ind=where(LDAscore eq maxscore)
+;        class_image[p,l]=pix_class_ind+1   ;add one because 0=unclassified  
+;        lda_score_image[p,l,*] = LDAscore ;record the LDA score for each class
       endfor
       endelse
     endfor
