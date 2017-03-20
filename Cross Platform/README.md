@@ -85,6 +85,6 @@ Need to run IDL code on IDL 64 bit without ENVI
 4. `pullingOutROIval.py`: Reads through .CSV of ROI information and pulls out rows that are to be used in validation
 5. `calcclassificationresults.py`: This code reads in ROI formated CSV (formatted using `pullingOutROIVal.py`) and calculates classification results including producers, users, overall, and kappa accuracy results are output to a CSV
 6. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare model results use `LoopFilesPullClassificationStats.py` which reads through .CSVs and pulls out the producers, users, overall, and kappa accuracy results are output to a CSV
-7. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare CDA coefficients use `LoopFilesPullCDAVars.py` which reas through .CSVs and pulls out CDA variables.
+7. OPTIONAL: If you've run multiple CDA-LDA classifications and want to compare CDA coefficients use `LoopFilesPullCDAVars.py` which reads through .CSVs and pulls out CDA variables.
 
 

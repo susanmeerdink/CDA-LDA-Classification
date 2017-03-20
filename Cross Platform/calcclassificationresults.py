@@ -12,8 +12,8 @@
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20131125_AVIRIS&MASTER_same_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS&MASTER_diff_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS_same_OUTPUT.csv'
-inROI = 'C:\\Users\\Susan\\Downloads\\ROIvalidationOutput_smoothed.csv'
-lookup ='C:\\Users\\Susan\\Downloads\\LookupTable.csv'
+inROI = 'I:\\Classification-Products\\FL03\\3 - Classification Results\\f140829_class_results_OUTPUT_filled.csv'
+lookup ='I:\\Classification-Products\\FL03\\3 - Classification Results\\Lookup_Table.csv'
 
 ############ENDINPUTS####################################
 
@@ -46,7 +46,7 @@ for line in open(inROI):
         lineAll = line.split(',') #Split the line at commas into an array
         lineAll = map(lambda lineAll: lineAll.strip(), lineAll)
         columnActual = lineAll.index('Dominant') #find the index of column labeled dominant which hold actual class
-        columnModel = lineAll.index('Classification Code') #find index of column labeled with classification code                                   
+        columnModel = lineAll.index('Classification') #find index of column labeled with classification code                                   
     else: #If not read in the line
         lineAll = line.split(',') #Split the line at commas into an array
         lineAll = map(lambda lineAll: lineAll.strip(), lineAll)
@@ -77,10 +77,15 @@ totalCorrect = 0 #Variable that will sum up total number of correctly classified
 #Classification User's and Producer's Accuracy#                      
 while count < classArray.shape[0]: #While we haven't reached end of classification array
     classCorrect = classArray[count,count] #get the total number of pixels for class that have been classified correctly
-    #Divide the correct number of pixels by the total number of actual pixels present                      
-    producer[count] = classCorrect/columnTotals[count]
-    #Divide the correct number of pixels by the total number of actual pixels present                      
-    user[count] = classCorrect/rowTotals[count]
+    if classCorrect == 0:
+        producer[count] = 0
+        user[count] = 0
+    else: 
+        #Divide the correct number of pixels by the total number of actual pixels present                      
+        producer[count] = classCorrect/columnTotals[count]
+        #Divide the correct number of pixels by the total number of actual pixels present                      
+        user[count] = classCorrect/rowTotals[count]
+
     totalCorrect = totalCorrect + classCorrect #add current correctly classified pixels to total correct pixels                      
     count = count + 1 #increase the counter
     
