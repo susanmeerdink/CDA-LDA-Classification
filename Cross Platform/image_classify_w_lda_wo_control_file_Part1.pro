@@ -25,13 +25,13 @@ close, /ALL
 ;declare inputs
 ;;;;;;;;;;;;;;;Declare Directory for Training Library;;;;;;;;;;;;;;;;;;;;;;;
 pnameTrain = strarr(1)
-pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS\'; %Set directory
+pnameTrain = 'I:\Classification-Products\FL03\1 - Spectral Library\'; %Set directory
 ;pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS & MASTER\'; %Set directory
 ;pnameTrain = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\Combined\'; %Set directory
 
 ;;;;;;;;;;;;;;;Declare file name of the training library;;;;;;;;;;;;;;;;;;;;;;;
 trainlib_file = strarr(1)
-trainlib_file =  '20130411_Spectral_Library_AVIRIS_sorted'; %Set filename
+trainlib_file =  'f140829_AVIRIS_spectral_library'; %Set filename
 ;trainlib_file =  '20130606_Spectral_Library_AVIRIS_sorted'; %Set filename
 ;trainlib_file =  '20131125_Spectral_Library_AVIRIS_sorted'; %Set filename
 ;trainlib_file =  '20140416_Spectral_Library_AVIRIS_sorted'; %Set filename
@@ -45,7 +45,7 @@ trainlib_file =  '20130411_Spectral_Library_AVIRIS_sorted'; %Set filename
 ;trainlib_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 ;trainlib_file =  '2013&2014_Spectral_Library_AVIRIS'; %Set filename
 ;trainlib_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
-trainlib_file = trainlib_file + '_train_Spectral.sli' ;Variable for CDA coefficients name
+trainlib_file = trainlib_file + '_CDAvars_CDAcoeffs' ;Variable for CDA coefficients name
 
 ;;;;;;;NEED FOR Part 2 NOT Part 1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;Declare Directory for Image;;;;;;;;;;;;;;;;;;;;;;;
@@ -157,6 +157,7 @@ trainspec_wclass = trainspec   ; assign to Keely's variable she uses below
 ;trainspec_wclass = train_canon_vars
 
 ;Run LDA to get classification functions
+print, 'starting lda'
 IMSL_DISCR_ANALYSIS,$ ;(http://www.exelisvis.com/docs/IMSL_DISCR_ANALYSIS.html)
   trainspec_wclass,$ ;Two-dimensional array of size n_rows by n_variables + 1 containing the data in n_rows and n_variables = number of variables to be used in the discrimination. 
   (n_groups-1),$ ;Number of groups in the data.

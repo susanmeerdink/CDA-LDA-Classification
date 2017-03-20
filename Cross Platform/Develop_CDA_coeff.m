@@ -103,6 +103,30 @@ fulllib=fread(inlibfileID,[nbands,nspec],'double=>float32');
 fclose(inlibfileID);
 fulllib=fulllib'; %now it's 1 row per spectrum and 1 col per band
 outlib_goodbands_Val=fulllib;
+
+% split data into chunks delimited by {} signs
+remain = inlibfile_hdr_info;
+c=1;
+while true
+   [str, remain] = strtok(remain, '{}');
+   if isempty(str),  break;  end
+   str_store{c}=str;
+   c=c+1;
+end
+n_cells=size(str_store,2);
+
+%locate & store bad bands info
+for i=1:n_cells
+    check=strfind(str_store{i},'bbl');
+    if check > 0
+        bbl_col=i+1;
+    end
+end
+s2 = regexp(str_store{bbl_col}, '\,', 'split');
+for c=1:nbands
+    bbl(c)=str2num(s2{c});
+end
+goodbandind=find(bbl);
 %% Run CDA classification using CDA_manova.m
 % INFO:
 % This step creates the CDA coefficients and does accuracy assessment
@@ -112,10 +136,10 @@ outlib_goodbands_Val=fulllib;
 % train_group: pull out the group from the metadata (species, etc)
 % validlib: Your validation library read in using ReadSpecLib_wfullmeta.m
 % valid_group: pull out the group from the metadata (species, etc)
-trainlib = outlib_goodbands_Train;
-train_group = table2cell(metadata_Train(:,11)); %Pull out species for grouping - it is column 9 in metadata table
-validlib = outlib_goodbands_Val;
-valid_group = table2cell(metadata_Val(:,11));%Pull out species for grouping - it is column 9 in metadata table
+trainlib = outlib_goodbands_Train(:,goodbandind);
+train_group = cell2mat(table2cell(metadata_Train(:,12))); %Pull out species for grouping - it is column 9 in metadata table
+validlib = outlib_goodbands_Val(:,goodbandind);
+valid_group = cell2mat(table2cell(metadata_Val(:,12)));%Pull out species for grouping - it is column 9 in metadata table
 
 % OUTPUTS:
 % accstats: accuracy stats (overall, cappa, error matrix, producers/users, valid class(what it was classified as), valid group (truth))

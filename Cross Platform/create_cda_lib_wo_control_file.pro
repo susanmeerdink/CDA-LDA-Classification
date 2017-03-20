@@ -1,4 +1,4 @@
-pro create_cda_lib_wo_control_file_ariel
+pro create_cda_lib_wo_control_file
 
 
 ;; This program classifies an image using a EMing spectral library and a set of CDA coefficients output from Matlab.
@@ -27,7 +27,7 @@ close, /ALL
 pname=strarr(1)
 ;pname = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS\'; %Set directory
 ;pname = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\AVIRIS & MASTER\'; %Set directory
-pname = 'H:\users\meerdink\Dropbox\AAG_2016_Research\Spectral Libraries\Combined\'; %Set directory
+pname = 'I:\Classification-Products\FL03\1 - Spectral Library\'; %Set directory
 
 ;;;;;;;;;;;;;;;Declare filename of endmember library;;;;;;;;;;;;;;;;;;;;;;;
 EMlib_file = strarr(1)
@@ -43,9 +43,9 @@ EMlib_file = strarr(1)
 ;EMlib_file =  '20140416_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 ;EMlib_file =  '20140606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 ;EMlib_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-EMlib_file =  '2013&2014_Spectral_Library_AVIRIS'; %Set filename
+EMlib_file =  'f140829_AVIRIS_spectral_library'; %Set filename
 ;EMlib_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
-EMlib_file = EMlib_file + '_train.sli' ;Variable for CDA coefficients name
+EMlib_file = EMlib_file + '_calibration.sli' ;Variable for CDA coefficients name
 
 ;;;;;;;;;;;;;;;Declare filename of CDA Coefficients File;;;;;;;;;;;;;;;;;;;;;;;
 CDAcoeff_file = strarr(1)
@@ -61,7 +61,7 @@ CDAcoeff_file = strarr(1)
 ;CDAcoeff_file =  '20140416_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 ;CDAcoeff_file =  '20140606_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
 ;CDAcoeff_file =  '20140829_Spectral_Library_AVIRIS&MASTER_sorted'; %Set filename
-CDAcoeff_file =  '2013&2014_Spectral_Library_AVIRIS'; %Set filename
+CDAcoeff_file =  'f140829_AVIRIS_spectral_library'; %Set filename
 ;CDAcoeff_file =  '2013&2014_Spectral_Library_AVIRIS&MASTER'; %Set filename
 CDAcoeff_file = CDAcoeff_file + '_CDAvars_CDAcoeffs.csv' ;Variable for CDA coefficients name
 
