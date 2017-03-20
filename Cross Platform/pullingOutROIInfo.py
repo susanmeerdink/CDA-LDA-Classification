@@ -1,94 +1,73 @@
+# Extracting ROI data
 # Susan Meerdink
-# updated 12/8/2015
-# last updated 3/18/2016
+# Created 12/8/2015
+# This code reads through a spectral library metdata file created with ENVI and formats it into .csv.
+# Each row of the csv is one item in the spectral library. Does not include RGB value of ROI.
+# Does include Name, # of Points, spectral information, and other information included in ENVI output
+# (such as X, Y, MapX, MapY, Lat, Lon).
+# This code takes two inputs:
+# 1. The original spectral library from ENVI
+# 2. Output file name
+
 # ############INPUTS######################################
-#MUST add semi colon (;) to end of file!
-OrigROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20130411_AVIRIS_diff.txt'
-#OrigROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS_same.txt'
-#OrigROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20130411_AVIRIS&MASTER_diff.txt'
-#OrigROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20130411_AVIRIS&MASTER_same.txt'
+OrigROI = 'I:\\Classification-Products\FL03\\3 - Classification Results\\f140829_class_results.txt'
 
-OutputROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20130411_AVIRIS_diff_OUTPUT.csv'
-#OutputROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS_same_OUTPUT.csv'
-#OutputROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS&MASTER_diff_OUTPUT.csv'
-#OutputROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140606_AVIRIS&MASTER_same_OUTPUT.csv'
-
-MasterMetaData = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\Spectral Libraries\\SBFR_all432polys_2013_metadata.csv'
+OutputROI = 'I:\\Classification-Products\FL03\\3 - Classification Results\\f140829_class_results_OUTPUT.csv'
 
 ############ENDINPUTS####################################
 
 import numpy as np
-#Set Output file for ROIs
-outputFile = open(OutputROI,'w')
-inputFile = open(OrigROI,'r')
 
-meta = [] #Variable to hold metadata
-i = 0 #counter
-#Loop through file that contains all the metadata fields for each polygon and store the metadata so that it can be assigned to the new library
-for polygon in open(MasterMetaData):
-    text = polygon.split(',')#Split the line into array based on comma
-    string = text[-1]#Get last element of list
-    top = string.find('\n') #Find the newline character
-    text[-1] = string[0:top] #Remove the newline character from the last element
-    meta.append(text) #Add this line (polygon info) to the meta data variable 
-    i = i +1 #Advance counter
+outputFile = open(OutputROI,'w') #Create the output file for the formatted ROIs
+inputFile = open(OrigROI,'r') #Open the original ROI file 
 
-#Create headers for the output file
-outputFile.write('Name,# of Pts,')
-outputFile.write( ', '.join(meta[0]))
-outputFile.write(',ID,X,Y, Map X, Map Y, Lat, Long, Classification Code\n')
+## Read through top portion of ENVI Metadata to pull out Name, Number of points, and header
+polygonIDList = [] #Will hold the polygon list
+ptList = [] #Will hold the number of points for each polygon
+k = 0 #Use this to loop through polygon list
 
-polygonIDList = []
-ptList = []
-roiData = []
-line = inputFile.readline()
-while ';' in line:
-    #Finding and storing polygon name
-    bottomPoly = line.find('=')
-    if bottomPoly > -1:
-        topPoly = line.find(')')
-        polygonID = line[bottomPoly+1:topPoly]
-        polygonIDList.append(polygonID)
-        #outputFile.write(polygonID + ',')
+#line = inputFile.readline() #Sets the inital line to be read in
+for line in inputFile:
+    #print(line)
+    if ';' in line: #Pull out header info
+        #Finding and storing polygon name
+        bottomPoly = line.find('name:')
+        if bottomPoly > -1:
+            topPoly = line.find('\n')
+            polygonID = line[bottomPoly+6:topPoly]
+            polygonIDList.append(polygonID)
 
-    #Finding and Storing number of points
-    bottomPt = line.find('npts:')
-    if bottomPt > -1:
-        inLine = line[bottomPt+5:bottomPt+8]
-        pt = inLine.strip()
-        #outputFile.write(pt + '\n')
-        ptList.append(pt)
+        #Finding and Storing number of points
+        bottomPt = line.find('npts:')
+        if bottomPt > -1:
+            inLine = line[bottomPt+5:bottomPt+9]
+            pt = inLine.strip()
+            ptList.append(pt)
 
-    line = inputFile.readline()
+        #Finding and Writing header for output file
+        header = line.find(' ID ')
+        if header > -1:
+            headerLine = line.split('  ')
+            headerLineIn = [x for x in headerLine if x]
+            outputFile.write('Name,nPts,')
+            outputFile.write(', '.join(headerLineIn[1:len(headerLineIn)]))#Write header line to file (leaving out semi colon as first item)
 
-k = 0
-number = range(0,i)#create a list with numbers ranging from 0 to the length of the polygon metadata (first file that was looped through)
-while ';' not in line:
-    #If it's a blank line, then go on to the next polygon ID
-    if line.isspace() == 1:
-        k = k +1
-        line = inputFile.readline()
+    else: #Pull out Spectral Information
+        #If it's a blank line, then go on to the next polygon ID
+        if line.isspace() == 1:
+            k = k +1
 
-    else:
-        #Write out polygon name and points
-        outputFile.write(polygonIDList[k] + ',' + ptList[k]+ ',')
+        else:            
+            #Write out polygon name and points
+            outputFile.write(polygonIDList[k] + ',' + ptList[k]+ ',')
 
-        #Write out metadata fields
-        for j in number: #Loop through polygon metadata
-            if polygonIDList[k] == meta[j][1]: #Check to see if the pixel belongs to the metadata polygon, if it does
-                outputFile.write(', '.join(meta[j])+ ',')#
-                break
-            j = j +1
-
-        #Write out line
-        #string = filter(None,line.split('\t'))
-        string = filter(None,line.split(' '))
-        outputFile.write(','.join(string))
-        line = inputFile.readline()
+            #Write out line
+            string = filter(None,line.split(' '))
+            outputFile.write(','.join(string))
     
 outputFile.close()
 inputFile.close()
-    
+print('Formatting Complete')
 
 #########################END#####################################################
     
