@@ -12,7 +12,7 @@
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20131125_AVIRIS&MASTER_same_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS&MASTER_diff_OUTPUT.csv'
 #inROI = 'R:\\users\\susan.meerdink\\Dropbox\\AAG_2016_Research\\ROIs\\20140829_AVIRIS_same_OUTPUT.csv'
-inROI = 'I:\\Classification-Products\\FL03\\3 - Classification Results\\f140829_class_results_OUTPUT_filled.csv'
+inROI = 'I:\\Classification-Products\\FL03\\3 - Classification Results\\f130411_class_results_OUTPUT_filled.csv'
 lookup ='I:\\Classification-Products\\FL03\\3 - Classification Results\\Lookup_Table.csv'
 
 ############ENDINPUTS####################################
@@ -52,12 +52,13 @@ for line in open(inROI):
         lineAll = map(lambda lineAll: lineAll.strip(), lineAll)
         indexModel = int(lineAll[columnModel]) #Grab model classification code and thus index
         try:
-            indexModel = indexModel - 1 #to assign value to correct index
-            indexActual = lookupStr.index(lineAll[columnActual]) #Find Actual code and thus index 
-            #indexActual = lookupStr.index(lineAll[columnActual].upper()) #Find Actual code and thus index - Uncomment this line for species codes
+            if indexModel != 0:   
+                indexModel = indexModel -1  #to assign value to correct index
+                indexActual = lookupStr.index(lineAll[columnActual]) #Find Actual code and thus index
+                #indexActual = lookupStr.index(lineAll[columnActual].upper()) #Find Actual code and thus index - Uncomment this line for species codes
 
-            #Assign Value#
-            classArray[indexModel,indexActual] =  classArray[indexModel,indexActual] + 1 #Add one to this position
+                #Assign Value#
+                classArray[indexModel,indexActual] =  classArray[indexModel,indexActual] + 1 #Add one to this position
         except:
             continue
 
