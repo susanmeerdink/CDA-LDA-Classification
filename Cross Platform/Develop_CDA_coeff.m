@@ -11,7 +11,7 @@
 %inlibfilebase: a string or string variable name of the spectral library file; must include path name.
 directory = 'I:\Classification-Products\Combined\1 - Spectral Library\'; %Set directory
 
-filename = 'f130606_FL02&FL03_AVIRIS_spectral_library'; %Set filename
+filename = 'f131125_FL02&FL03_AVIRIS_spectral_library'; %Set filename
 
 inlibfilebaseTrainSpec = strcat(directory,filename,'_spectra_calibration'); %set path for training library
 inlibfilebaseTrainMeta = strcat(directory,filename,'_metadata_calibration'); %set path for training library
@@ -74,7 +74,7 @@ classes = cdastats.gnames; %Set classes equal to the number of group names
 writeCDAvars(cdastats,outfilebase,classes)
 
 %% Load ENVI Image
-imageFile = 'I:\AVIRIS\FL03\7 - Other Files\FL03_f130606t01p00r11rfl_hpc18_bottomhalf_BIL';
+imageFile = 'I:\AVIRIS\FL03\7 - Other Files\FL03_f131125t01p00r14rfl_hpc18_bottomhalf_BIL';
 imageData = enviread(imageFile);
 disp('Done Reading in ENVI Image')
 %% Run Linear Discriminant Analysis Classification
@@ -86,26 +86,12 @@ for r = 1:length(imageData.y) %loop through rows/lines
     valid_class=classify(tempVars,canon_vars_Train,train_group);
     outputImage(r,:) = valid_class';
 end
-
+disp('Done Classifying Image')
 %% Write ENVI file
-outputLoc = 'I:\AVIRIS\FL03\7 - Other Files\FL03_f130606t01p00r11_CDALDA_classification';
-headerLoc = 'I:\AVIRIS\FL03\7 - Other Files\FL03_f130606t01p00r11_CDALDA_classification.hdr';
+outputLoc = 'I:\AVIRIS\FL03\7 - Other Files\FL03_f131125t01p00r14_CDALDA_classification';
+headerLoc = 'I:\AVIRIS\FL03\7 - Other Files\FL03_f131125t01p00r14_CDALDA_classification.hdr';
 info = enviinfo(outputImage);
 %info.data_type = 'ENVI Classification';
 %info.class_names = unique(metadata_Train(:,10));
 %info.map_info = imageData.info.map_info;
 enviwrite(outputImage,info,outputLoc,headerLoc);
-
-%% Run Linear Discriminant Analysis Classification
-%%%%%%%%AFTER IDL STUFF - NOT DONE EITHER %%%%%%%%%%%%%%%%%%%
-% % INPUTS  
-% % directory = file directory pathname
-% directory = 'E:\Meerdink\Dropbox\Code\CDA_Work_With_Keely\Data\';
-% % fileTrainLib = file name of the training library
-% fileTrainLib = 'SB_alldates_20092011_train';%NO .sli
-% % fileImage = file name of image to be classified
-% fileImage ='f130411t01p00r08rfl_hpc18_mask';
-% % className = class column name
-% className = 'Dominant';
-% 
-% image_classify_w_lda(directory,fileTrainLib,fileImage,className)
