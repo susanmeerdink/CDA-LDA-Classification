@@ -3,6 +3,9 @@
 *.hdr
 *.sli
 *.asv
+*.xml
+*.iml
+
 
 # Windows image file caches
 Thumbs.db
