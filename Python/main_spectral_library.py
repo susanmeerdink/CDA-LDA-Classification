@@ -17,45 +17,49 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 import fiona
 from descartes import PolygonPatch
+from shapely import *
 from shapely.geometry import shape, MultiPolygon
 from shapely.ops import transform
 from mpl_toolkits.basemap import Basemap
-import mpl_toolkits.basemap as pyproj
+import pyproj
 from functools import partial
 
-# Open shapefile
-polygons = MultiPolygon([shape(pol['geometry']) for pol in fiona.open(polyLocation + '.shp')])
-# project = partial(
-#     pyproj.transform,
-#     pyproj.Proj(polygonsOrg.crs),  # source coordinate system
-#     pyproj.Proj(init='epsg:32611'))  # destination coordinate system
-# polygons = shapely.ops.transform(project, polygonsOrg)  # apply projection
+# Open shapefile and transform to appropriate coordinate system
+polyCRS = fiona.open(polyLocation + '.shp', "r")  # Open polygon to get crs information for transformation
+polyOriginal = MultiPolygon([shape(pol['geometry']) for pol in fiona.open(polyLocation + '.shp')])  # Open polygon as a MultiPolygon for processing purposes
+project = partial(  # Define function for projection process
+    pyproj.transform,
+    pyproj.Proj(polyCRS.crs),  # source coordinate system
+    pyproj.Proj(init='epsg:32611'))  # destination coordinate system, UTM Zone 11 WGS 84
+polygons = transform(project, polyOriginal)  # apply projection
+print polygons
 print len(polygons), "Polygons Found"
 
 # Plot reference polygons
-cm = plt.get_cmap('RdBu')
-num_colours = len(polygons)
-fig = plt.figure()
-ax = fig.add_subplot(111)
-minx, miny, maxx, maxy = polygons.bounds
-w, h = maxx - minx, maxy - miny
-ax.set_xlim(minx - 0.2 * w, maxx + 0.2 * w)
-ax.set_ylim(miny - 0.2 * h, maxy + 0.2 * h)
-ax.set_aspect(1)
-patches = []
-for idx, p in enumerate(polygons):
-    colour = cm(1. * idx / num_colours)
-    patches.append(PolygonPatch(p, fc=colour, ec='#555555', alpha=1., zorder=1))
-ax.add_collection(PatchCollection(patches, match_original=True))
-ax.set_xticks([])
-ax.set_yticks([])
-plt.title("Plant Species Reference Polygons")
-plt.savefig('F:\\Image-To-Image-Registration\\AVIRIS\\test.png', alpha=True, dpi=300)
-plt.show()
-plt.clf()
+# cm = plt.get_cmap('RdBu')
+# num_colours = len(polygons)
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# minx, miny, maxx, maxy = polygons.bounds
+# w, h = maxx - minx, maxy - miny
+# ax.set_xlim(minx - 0.2 * w, maxx + 0.2 * w)
+# ax.set_ylim(miny - 0.2 * h, maxy + 0.2 * h)
+# ax.set_aspect(1)
+# patches = []
+# for idx, p in enumerate(polygons):
+#     # colour = cm(1. * idx / num_colours)
+#     # patches.append(PolygonPatch(p, fc=colour, ec='#555555', alpha=1., zorder=1))
+#     patches.append(PolygonPatch(p, fc='#000000', ec='#000000', alpha=1., zorder=1))
+# ax.add_collection(PatchCollection(patches, match_original=True))
+# ax.set_xticks([])
+# ax.set_yticks([])
+# plt.title("Plant Species Reference Polygons")
+# plt.savefig('F:\\Image-To-Image-Registration\\AVIRIS\\test.png', alpha=True, dpi=300)
+# plt.show()
+# plt.clf()
 
 # Find image files that spectra will be extracted from
-flList = ['FL02']  # , 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
+flList = ['FL04']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
 imageList = []
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
@@ -67,31 +71,20 @@ for fl in flList:  # loop through flightline files to find specific date
 spectralLibrary = []
 for i in imageList:  # loop through flightline files to extract spectra
     print 'Extracting spectra from', i
-    imgFile = rasterio.open(i, 'r')
-    imgProj = imgFile.affine  # Get projection
-    print imgFile.read(1).shape
+    imgFile = rasterio.open(i, 'r')  # Open raster image
+    iName = i.split('\\')[-1]  # Get file name
 
-    # Plot reference polygons
-    # cm = plt.get_cmap('RdBu')
-    # num_colours = len(polygons)
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # minx, miny, maxx, maxy = polygons.bounds
-    # w, h = maxx - minx, maxy - miny
-    # ax.set_xlim(minx - 0.2 * w, maxx + 0.2 * w)
-    # ax.set_ylim(miny - 0.2 * h, maxy + 0.2 * h)
-    # ax.set_aspect(1)
-    rasterio.plot.show((imgFile, 137), cmap='magma')
+    # Plot reference polygons on top of current image
+    fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
+    rasterio.plot.show((imgFile, 137), ax=axMap, cmap='hot', clim=(1, 10000))  # Show band 137 of current image
     patches = []
     for idx, p in enumerate(polygons):
-        colour = cm(1. * idx / num_colours)
-        patches.append(PolygonPatch(p, fc=colour, ec='#555555', alpha=1., zorder=1))
-    ax.add_collection(PatchCollection(patches, match_original=True))
-    ax.set_xticks([])
-    ax.set_yticks([])
-    plt.title("Plant Species Reference Polygons")
+        patches.append(PolygonPatch(p, fc='#FFFFFF', ec='#FFFFFF', alpha=1., zorder=1))
+    axMap.add_collection(PatchCollection(patches, match_original=True))
+    plt.xticks(fontsize=6)
+    plt.yticks(fontsize=6)
+    plt.title("Plant Species Reference Polygons with \n" + iName, fontsize=6)
     plt.savefig('F:\\Image-To-Image-Registration\\AVIRIS\\test.png', alpha=True, dpi=300)
-    plt.show()
 
     polygonMask = rasterio.features.geometry_mask(polygons, out_shape=imgFile.shape, transform=imgFile.transform, all_touched=True)
 
