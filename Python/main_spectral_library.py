@@ -33,7 +33,6 @@ project = partial(  # Define function for projection process
     pyproj.Proj(polyCRS.crs),  # source coordinate system
     pyproj.Proj(init='epsg:32611'))  # destination coordinate system, UTM Zone 11 WGS 84
 polygons = transform(project, polyOriginal)  # apply projection
-print polygons
 print len(polygons), "Polygons Found"
 
 # Plot reference polygons
@@ -69,7 +68,8 @@ for fl in flList:  # loop through flightline files to find specific date
             print 'Found', name
             imageList.append(name)  # add file to list of image files for future processing
 
-spectralLibrary = []
+spectralLibData = []
+spectralLibName = []
 for i in imageList:  # loop through flightline files to extract spectra
     print 'Extracting spectra from', i
     imgFile = rasterio.open(i, 'r')  # Open raster image
@@ -91,19 +91,31 @@ for i in imageList:  # loop through flightline files to extract spectra
     # Extract spectra from image
     # Note: cannot read entire AVIRIS file as it is too large, need to loop by band
     for bandNum in range(1, 2):  # Loop through bands (note: bands are indexed from 1)
+        flag = 0
         imgData = imgFile.read(bandNum)
 
-        for idx in range(0, 1):  # Loop through polygons len(polygons)
-            print polygons[idx]['geometry']
-            print polygons[idx]['properties']['Polygon_ID']
-            # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
-            polygonMask = rasterio.features.geometry_mask(polyCRS[idx]['geometry'], out_shape=imgFile.shape, transform=imgFile.transform, all_touched=True)
-            fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
-            rasterio.plot.show(polygonMask, ax=axMap)
+        for idx in range(0, len(polygons)):  # Loop through polygons
+            print idx
+            polyIn = polygons[idx]
+            polyName = polyCRS[idx]['properties']['Polygon_ID']
 
-            # create a masked numpy array
-            masked_array = np.ma.array(data=imgData, mask=polygonMask.astype(bool))
-            print (masked_array > 0).nonzero()
-            masked_data = masked_array[(masked_array > 0).nonzero()]
-            print masked_data
+            # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
+            polygonMask = rasterio.features.rasterize([(polyIn, 0)], out_shape=imgFile.shape,
+                                                      transform=imgFile.transform, all_touched=True)
+            masked_array = np.ma.MaskedArray(data=imgData, mask=np.logical_not(polygonMask))  # create a masked numpy array
+            test = len((masked_array > 0).nonzero()[0])  # Get the number of elements that are not zero
+            if test > 0:  # If there is data for this polygon assign the data
+                print len((masked_array > 0).nonzero()[0])
+                masked_data = masked_array[(masked_array > 0).nonzero()]
+                if flag == 0:  # If this is the first band...
+                    spectralLibName = np.vstack(spectralLibName, np.repeat(polyName, test))  # add polygon name to list
+                    singleLibData = np.empty([test, 224])  # create empty numpy array
+                    singleLibData[bandNum-1, :] = masked_data  # add data for that band to numpy array
+                    flag += flag
+                else:  # If this is not the first band...
+                    singleLibData[bandNum-1, :] = masked_data # add data for that band to numpy array
+                if bandNum == 224:  # If this is the last band add to the overall spectral library
+                    spectralLibData = np.vstack(spectralLibData, singleLibData)
+            else:  # If there is no data for this polygon skip to the next one
+                continue
 
