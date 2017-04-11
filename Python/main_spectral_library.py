@@ -88,34 +88,38 @@ for i in imageList:  # loop through flightline files to extract spectra
     plt.savefig(outFigLoc + iName + '_reference_poly.png', alpha=True, dpi=300)
     plt.clf()
 
-    # Extract spectra from image
-    # Note: cannot read entire AVIRIS file as it is too large, need to loop by band
-    for bandNum in range(1, 2):  # Loop through bands (note: bands are indexed from 1)
-        flag = 0
-        imgData = imgFile.read(bandNum)
+    for idx in range(0, len(polygons)):  # Loop through polygons
+        polyIn = polygons[idx]
+        polyName = polyCRS[idx]['properties']['Polygon_ID']
 
-        for idx in range(0, len(polygons)):  # Loop through polygons
-            print idx
-            polyIn = polygons[idx]
-            polyName = polyCRS[idx]['properties']['Polygon_ID']
+        # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
+        polygonMask = rasterio.features.rasterize([(polyIn, 1)], out_shape=imgFile.shape,
+                                                  transform=imgFile.transform, all_touched=True)
+        print np.count_nonzero(polygonMask)
+        test = np.count_nonzero(polygonMask)  # Get the number of elements that are not zero
 
-            # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
-            polygonMask = rasterio.features.rasterize([(polyIn, 0)], out_shape=imgFile.shape,
-                                                      transform=imgFile.transform, all_touched=True)
-            masked_array = np.ma.MaskedArray(data=imgData, mask=np.logical_not(polygonMask))  # create a masked numpy array
-            test = len((masked_array > 0).nonzero()[0])  # Get the number of elements that are not zero
-            if test > 0:  # If there is data for this polygon assign the data
-                print len((masked_array > 0).nonzero()[0])
+        if test > 0:  # If there is data for this polygon assign the data
+            indices = np.nonzero(polygonMask)
+            # Extract spectra from image
+            # Note: cannot read entire AVIRIS file as it is too large, need to loop by band
+            for bandNum in range(1,2):  # Loop through bands (note: bands are indexed from 1)
+                masked_array = np.ma.MaskedArray(data=imgFile.read(bandNum),
+                                                 mask=polygonMask)  # create a masked numpy array
                 masked_data = masked_array[(masked_array > 0).nonzero()]
-                if flag == 0:  # If this is the first band...
-                    spectralLibName = np.vstack(spectralLibName, np.repeat(polyName, test))  # add polygon name to list
+                if bandNum == 1:  # If this is the first band...
+                    spectralLibName = np.append(spectralLibName, np.repeat(polyName, test))  # add polygon name to list
                     singleLibData = np.empty([test, 224])  # create empty numpy array
+                    print np.shape(masked_data)
                     singleLibData[bandNum-1, :] = masked_data  # add data for that band to numpy array
-                    flag += flag
                 else:  # If this is not the first band...
                     singleLibData[bandNum-1, :] = masked_data # add data for that band to numpy array
                 if bandNum == 224:  # If this is the last band add to the overall spectral library
                     spectralLibData = np.vstack(spectralLibData, singleLibData)
-            else:  # If there is no data for this polygon skip to the next one
-                continue
+        else:  # If there is no data for this polygon skip to the next one
+            continue
 
+    # Extract spectra from image
+    # Note: cannot read entire AVIRIS file as it is too large, need to loop by band
+    # for bandNum in range(1, 2):  # Loop through bands (note: bands are indexed from 1)
+        # flag = 0
+        # imgData = imgFile.read(bandNum)
