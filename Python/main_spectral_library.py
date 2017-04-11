@@ -6,6 +6,7 @@
 polyLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_withMeta'
 metaLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_catalog.csv'
 dirLocation = 'F:\\Image-To-Image-Registration\\AVIRIS\\*'  # File location for AVIRIS or AVIRIS+MASTER that contains all flightlines
+outFigLoc = 'F:\\Dropbox\\Analysis\\Chapter 1 Analysis\\CDALDA_Figures\\'  # Ouput file location for figures generated from analysis
 dateTag = '130411'
 
 # Import Modules
@@ -84,15 +85,25 @@ for i in imageList:  # loop through flightline files to extract spectra
     plt.xticks(fontsize=6)
     plt.yticks(fontsize=6)
     plt.title("Plant Species Reference Polygons with \n" + iName, fontsize=6)
-    plt.savefig('F:\\Image-To-Image-Registration\\AVIRIS\\test.png', alpha=True, dpi=300)
-
-    polygonMask = rasterio.features.geometry_mask(polygons, out_shape=imgFile.shape, transform=imgFile.transform, all_touched=True)
+    plt.savefig(outFigLoc + iName + '_reference_poly.png', alpha=True, dpi=300)
+    plt.clf()
 
     # Extract spectra from image
     # Note: cannot read entire AVIRIS file as it is too large, need to loop by band
-    for bandNum in range(1, 2):  # bands are indexed from 1
+    for bandNum in range(1, 2):  # Loop through bands (note: bands are indexed from 1)
         imgData = imgFile.read(bandNum)
 
-        # create a masked numpy array
-        # masked_data = np.ma.array(data=imgData, mask=polygonMask.astype(bool))
-        # np.savetxt('F:\\Image-To-Image-Registration\\AVIRIS\\test.csv', masked_data, fmt="%s", delimiter=',')
+        for idx in range(0, 1):  # Loop through polygons len(polygons)
+            print polygons[idx]['geometry']
+            print polygons[idx]['properties']['Polygon_ID']
+            # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
+            polygonMask = rasterio.features.geometry_mask(polyCRS[idx]['geometry'], out_shape=imgFile.shape, transform=imgFile.transform, all_touched=True)
+            fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
+            rasterio.plot.show(polygonMask, ax=axMap)
+
+            # create a masked numpy array
+            masked_array = np.ma.array(data=imgData, mask=polygonMask.astype(bool))
+            print (masked_array > 0).nonzero()
+            masked_data = masked_array[(masked_array > 0).nonzero()]
+            print masked_data
+
