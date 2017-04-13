@@ -61,6 +61,8 @@ print len(polygons), "Polygons Found"
 # Find image files that spectra will be extracted from
 flList = ['FL04']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
 imageList = []
+spectralLibData = []
+spectralLibName = []
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
     for name in glob.glob(imageLocation):  # Ignore header files
@@ -68,8 +70,7 @@ for fl in flList:  # loop through flightline files to find specific date
             print 'Found', name
             imageList.append(name)  # add file to list of image files for future processing
 
-spectralLibData = []
-spectralLibName = []
+
 for i in imageList:  # loop through flightline files to extract spectra
     print 'Extracting spectra from', i
     imgFile = rasterio.open(i, 'r')  # Open raster image
@@ -101,12 +102,16 @@ for i in imageList:  # loop through flightline files to extract spectra
             for i in range(0, len(indices)):  #
                 x = indices[0][i]
                 y = indices[1][i]
-                for pixel in imgFile.sample([(x, y)]):
-                    if any(pixel):  # If there are non zero values save them to spectral library
-                        print 'here'
-                        spectralLibData = np.append(spectralLibData, pixel)
-                        spectralLibName = np.append(spectralLibName, polyName)
-            # Extract spectra from image
+                window = ((x, x+1), (y, y+1))
+                data = imgFile.read(window=window, masked=False, boundless=True)  # Extract spectra from image
+                pixel = np.transpose(data[:, 0, 0])
+                if any(pixel):  # If there are non zero values save them to spectral library
+                    print 'here'
+                    spectralLibData = np.append(spectralLibData, pixel, axis=0)
+                    spectralLibName = np.append(spectralLibName, polyName)
+                else:  # If the values are all zero move on to next polygon
+                    break
+
             # Note: cannot read entire AVIRIS file as it is too large, need to loop by band
             # for bandNum in range(1,225):  # Loop through bands (note: bands are indexed from 1)
             #     masked_data = imgFile.read(bandNum)[indices]  # create a masked numpy array
