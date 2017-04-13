@@ -60,14 +60,12 @@ print len(polygons), "Polygons Found"
 
 # Find image files that spectra will be extracted from
 flList = ['FL04']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
-imageList = []
-spectralLibData = []
-spectralLibName = []
+spectralLibData = np.empty([0, 224])
+spectralLibName = np.empty([0, 3])
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
     for name in glob.glob(imageLocation):  # Ignore header files
         if '.hdr' not in name:
-            imageList.append(name)  # add file to list of image files for future processing
             print 'Extracting spectra from', name
             imgFile = rasterio.open(name, 'r')  # Open raster image
             shortName = name.split('\\')[-1]  # Get file name
@@ -102,13 +100,11 @@ for fl in flList:  # loop through flightline files to find specific date
                         data = imgFile.read(window=window, masked=False, boundless=True)  # Extract spectra from image
                         pixel = np.transpose(data[:, 0, 0])
                         if any(pixel):  # If there are non zero values save them to spectral library
-                            print 'here'
+                            inMeta = np.array([fl, dateTag, polyName])
                             spectralLibData = np.vstack((spectralLibData, pixel))
                             spectralLibName = np.vstack((spectralLibName, [fl, dateTag, polyName]))
                         else:  # If the values are all zero move on to next polygon
                             break
                 else:  # If there is no data for this polygon skip to the next one
                     continue
-
-print spectralLibName
-print np.shape(spectralLibData)
+                print 'Done extracting ', len(spectralLibName), ' spectra'
