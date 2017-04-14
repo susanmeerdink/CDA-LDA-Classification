@@ -6,7 +6,7 @@
 polyLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_withMeta'
 metaLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_catalog.csv'
 dirLocation = 'F:\\Image-To-Image-Registration\\AVIRIS\\*'  # File location for AVIRIS or AVIRIS+MASTER that contains all flightlines
-outFigLoc = 'F:\\Dropbox\\Analysis\\Chapter 1 Analysis\\CDALDA_Figures\\'  # Ouput file location for figures generated from analysis
+outLoc = 'F:\\Classification-Products\\1 - Spectral Library\\'  # Ouput file location for figures generated from analysis
 dateTag = '130411'
 
 # Import Modules
@@ -24,8 +24,11 @@ from shapely.ops import transform
 from mpl_toolkits.basemap import Basemap
 import pyproj
 from functools import partial
+import random
+from sets import Set
 
 # Open shapefile and transform to appropriate coordinate system
+print "Opening reference polygons from " + polyLocation
 polyCRS = fiona.open(polyLocation + '.shp', "r")  # Open polygon to get crs information for transformation
 polyOriginal = MultiPolygon([shape(pol['geometry']) for pol in fiona.open(polyLocation + '.shp')])  # Open polygon as a MultiPolygon for processing purposes
 project = partial(  # Define function for projection process
@@ -33,7 +36,14 @@ project = partial(  # Define function for projection process
     pyproj.Proj(polyCRS.crs),  # source coordinate system
     pyproj.Proj(init='epsg:32611'))  # destination coordinate system, UTM Zone 11 WGS 84
 polygons = transform(project, polyOriginal)  # apply projection
-print len(polygons), "Polygons Found"
+print len(polygons), "Reference Polygons Found"
+
+# Load Metadata
+metadata = np.loadtxt(metaLocation, dtype=object, delimiter=',')  # Load in metadata
+headers = metadata[0, :]  # save headers separate of metadata
+headers = np.char.strip(headers.astype(str))  # remove whitespace from headers
+metadata = np.delete(metadata, 0, 0)  # remove the headers
+polyIndex = metadata[:, (np.where(headers == 'Polygon_ID')[0][0])]  # pull out what class to stratify sampling by
 
 # Plot reference polygons
 # cm = plt.get_cmap('RdBu')
@@ -58,10 +68,12 @@ print len(polygons), "Polygons Found"
 # plt.show()
 # plt.clf()
 
-# Find image files that spectra will be extracted from
-flList = ['FL04']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
+# Find image files and extract spectra using reference polygons
+flList = ['FL09']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
 spectralLibData = np.empty([0, 224])
-spectralLibName = np.empty([0, 3])
+spectralLibName = np.empty([0, 5])
+spectralLibMeta = np.empty([0, len(headers) + 5])
+offset = 0  # counter used to pull out  validation and calibration
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
     for name in glob.glob(imageLocation):  # Ignore header files
@@ -69,6 +81,7 @@ for fl in flList:  # loop through flightline files to find specific date
             print 'Extracting spectra from', name
             imgFile = rasterio.open(name, 'r')  # Open raster image
             shortName = name.split('\\')[-1]  # Get file name
+            spectraCount = 0
 
             # Plot reference polygons on top of current image
             fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
@@ -80,7 +93,7 @@ for fl in flList:  # loop through flightline files to find specific date
             plt.xticks(fontsize=6)
             plt.yticks(fontsize=6)
             plt.title("Plant Species Reference Polygons with \n" + shortName, fontsize=6)
-            plt.savefig(outFigLoc + shortName + '_reference_poly.png', alpha=True, dpi=300)
+            plt.savefig(outLoc + 'Figures\\' + shortName + '_reference_poly.png', alpha=True, dpi=300)
             plt.clf()
 
             for idx in range(0, len(polygons)):  # Loop through polygons
@@ -100,11 +113,63 @@ for fl in flList:  # loop through flightline files to find specific date
                         data = imgFile.read(window=window, masked=False, boundless=True)  # Extract spectra from image
                         pixel = np.transpose(data[:, 0, 0])
                         if any(pixel):  # If there are non zero values save them to spectral library
-                            inMeta = np.array([fl, dateTag, polyName])
+                            spectraCount += 1  # How many spectra were collected from flightline
+                            inName = [fl, dateTag, polyName, x, y]
+                            inMeta = np.hstack((inName, metadata[np.where(polyIndex == polyName)[0][0], :]))
                             spectralLibData = np.vstack((spectralLibData, pixel))
-                            spectralLibName = np.vstack((spectralLibName, [fl, dateTag, polyName]))
+                            spectralLibName = np.vstack((spectralLibName, inName))
+                            spectralLibMeta = np.vstack((spectralLibMeta, inMeta))
                         else:  # If the values are all zero move on to next polygon
                             break
+                    if spectraCount > 0:  # Split spectra into training and validation libraries
+                        # Using Proportional Limit of 50% for smaller polygons and for
+                        # Absolute Limit of 10 spectra for larger polygons (Roth et al. 2012)
+                        propLimit = 0.5
+                        absoLimit = 10
+
+                        # Separate into validation/calibration
+                        if propLimit * spectraCount < 10:  # If it is a small polygon, use proportional limit
+                            valIndex = random.sample(xrange(0, spectraCount), int(round(propLimit * spectraCount)))
+                        else:  # If it is a large polygon use absolute limit
+                            valIndex = random.sample(xrange(0, spectraCount), absoLimit)
+                        fullIndex = range(0, spectraCount)
+                        calIndex = list(Set(fullIndex).difference(valIndex))
+                        valIndex = [x + offset for x in valIndex]
+                        calIndex = [x + offset for x in calIndex]
+                        valMeta = spectralLibMeta[valIndex, :]
+                        valSpec = np.column_stack((valMeta[:, 0], spectralLibData[valIndex, :])).T
+                        calMeta = spectralLibMeta[calIndex, :]
+                        calSpec = np.column_stack((calMeta[:, 0], spectralLibData[calIndex, :])).T
                 else:  # If there is no data for this polygon skip to the next one
                     continue
-                print 'Done extracting ', len(spectralLibName), ' spectra'
+            offset = offset + spectraCount
+            print 'Done extracting ', spectraCount, ' spectra'
+
+# Create new output files
+fileOutSpec = file((outLoc + 'Combined Single Date\\' + dateTag + '_spectral_library_spectra.csv'), 'wb')
+fileOutMeta = file((outLoc + 'Combined Single Date\\' + dateTag + '_spectral_library_metadata.csv'), 'wb')
+calLibSpec = file(outLoc + 'Combined Single Date\\' + dateTag + '_spectral_library_calibration_spectra.csv', 'wb')
+calLibMeta = file(outLoc + 'Combined Single Date\\' + dateTag + '_spectral_library_calibration_metadata.csv', 'wb')
+valLibSpec = file(outLoc + 'Combined Single Date\\' + dateTag + '_spectral_library_validation_spectra.csv', 'wb')
+valLibMeta = file(outLoc + 'Combined Single Date\\' + dateTag + '_spectral_library_validation_metadata.csv', 'wb')
+
+# Get together data and headers
+headerOutSpec = 'Flightline, Date, PolygonName, X, Y,' + ','.join(map(str, imgFile.indexes))
+headerOutMeta = ','.join(headers)
+allSpec = np.hstack((spectralLibName, spectralLibData))
+allMeta = []
+
+# Save spectral libraries from all flightlines
+np.savetxt(fileOutSpec, allSpec, header=headerOutSpec, fmt='%s', delimiter=",")
+np.savetxt(fileOutMeta, allMeta, header=headerOutMeta, fmt='%s', delimiter=",")
+np.savetxt(calLibSpec, calSpec, header=headerOutSpec, fmt="%s", delimiter=',')
+np.savetxt(calLibMeta, calMeta, header=headerOutMeta, fmt="%s", delimiter=',')
+np.savetxt(valLibSpec, valSpec, header=headerOutSpec, fmt="%s", delimiter=',')
+np.savetxt(valLibMeta, valMeta, header=headerOutMeta, fmt="%s", delimiter=',')
+
+fileOutSpec.close()
+fileOutMeta.close()
+calLibSpec.close()
+calLibMeta.close()
+valLibSpec.close()
+valLibMeta.close()
