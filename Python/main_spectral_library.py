@@ -7,7 +7,7 @@ polyLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_withM
 metaLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_catalog.csv'
 dirLocation = 'F:\\Image-To-Image-Registration\\AVIRIS\\*'  # File location for AVIRIS or AVIRIS+MASTER that contains all flightlines
 outLoc = 'F:\\Classification-Products\\1 - Spectral Library\\'  # Ouput file location for figures generated from analysis
-dateTag = '130411'
+dateTag = '140416'
 
 # Import Modules
 import glob
@@ -18,10 +18,8 @@ from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 import fiona
 from descartes import PolygonPatch
-from shapely import *
 from shapely.geometry import shape, MultiPolygon
 from shapely.ops import transform
-from mpl_toolkits.basemap import Basemap
 import pyproj
 from functools import partial
 import random
@@ -78,7 +76,7 @@ valSpec = np.empty([0, 229])
 calSpec = np.empty([0, 229])
 
 # Find image files and extract spectra using reference polygons
-flList = ['FL09']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
+flList = ['FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
 offset = 0  # counter used to pull out  validation and calibration
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
@@ -152,7 +150,6 @@ for fl in flList:  # loop through flightline files to find specific date
                         valSpec = np.vstack((valSpec, inValSpec))
                         calSpec = np.vstack((calSpec, inCalSpec))
                     offset = offset + pixelCount
-                    print offset
                 else:  # If there is no data for this polygon skip to the next one
                     continue
             print 'Done extracting ', spectraCount, ' spectra'
@@ -179,6 +176,7 @@ np.savetxt(calLibMeta, calMeta, header=headerOutMeta, fmt="%s", delimiter=',')
 np.savetxt(valLibSpec, valSpec, header=headerOutSpec, fmt="%s", delimiter=',')
 np.savetxt(valLibMeta, valMeta, header=headerOutMeta, fmt="%s", delimiter=',')
 
+# Close files
 fileOutSpec.close()
 fileOutMeta.close()
 calLibSpec.close()
