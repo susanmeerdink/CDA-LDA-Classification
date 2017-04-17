@@ -68,11 +68,17 @@ polyIndex = metadata[:, (np.where(headers == 'Polygon_ID')[0][0])]  # pull out w
 # plt.show()
 # plt.clf()
 
-# Find image files and extract spectra using reference polygons
-flList = ['FL09']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
+# Variables to hold the entire spectral library, calibration library, and validation library with metadata
 spectralLibData = np.empty([0, 224])
 spectralLibName = np.empty([0, 5])
 spectralLibMeta = np.empty([0, len(headers) + 5])
+valMeta = np.empty([0, len(headers) + 5])
+calMeta = np.empty([0, len(headers) + 5])
+valSpec = np.empty([0, 229])
+calSpec = np.empty([0, 229])
+
+# Find image files and extract spectra using reference polygons
+flList = ['FL09']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
 offset = 0  # counter used to pull out  validation and calibration
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
@@ -99,6 +105,7 @@ for fl in flList:  # loop through flightline files to find specific date
             for idx in range(0, len(polygons)):  # Loop through polygons
                 polyIn = polygons[idx]
                 polyName = polyCRS[idx]['properties']['Polygon_ID']
+                pixelCount = 0
 
                 # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
                 polygonMask = rasterio.features.rasterize([(polyIn, 1)], out_shape=imgFile.shape,
@@ -113,6 +120,7 @@ for fl in flList:  # loop through flightline files to find specific date
                         data = imgFile.read(window=window, masked=False, boundless=True)  # Extract spectra from image
                         pixel = np.transpose(data[:, 0, 0])
                         if any(pixel):  # If there are non zero values save them to spectral library
+                            pixelCount += 1  # How many pixels are in this polygon
                             spectraCount += 1  # How many spectra were collected from flightline
                             inName = [fl, dateTag, polyName, x, y]
                             inMeta = np.hstack((inName, metadata[np.where(polyIndex == polyName)[0][0], :]))
@@ -121,28 +129,32 @@ for fl in flList:  # loop through flightline files to find specific date
                             spectralLibMeta = np.vstack((spectralLibMeta, inMeta))
                         else:  # If the values are all zero move on to next polygon
                             break
-                    if spectraCount > 0:  # Split spectra into training and validation libraries
+
+                    if pixelCount > 0:  # Split spectra into training and validation libraries
                         # Using Proportional Limit of 50% for smaller polygons and for
                         # Absolute Limit of 10 spectra for larger polygons (Roth et al. 2012)
                         propLimit = 0.5
                         absoLimit = 10
 
                         # Separate into validation/calibration
-                        if propLimit * spectraCount < 10:  # If it is a small polygon, use proportional limit
-                            valIndex = random.sample(xrange(0, spectraCount), int(round(propLimit * spectraCount)))
+                        if propLimit * pixelCount < 10:  # If it is a small polygon, use proportional limit
+                            valIndex = random.sample(xrange(0, pixelCount), int(round(propLimit * pixelCount)))
                         else:  # If it is a large polygon use absolute limit
-                            valIndex = random.sample(xrange(0, spectraCount), absoLimit)
-                        fullIndex = range(0, spectraCount)
+                            valIndex = random.sample(xrange(0, pixelCount), absoLimit)
+                        fullIndex = range(0, pixelCount)
                         calIndex = list(Set(fullIndex).difference(valIndex))
                         valIndex = [x + offset for x in valIndex]
                         calIndex = [x + offset for x in calIndex]
-                        valMeta = spectralLibMeta[valIndex, :]
-                        valSpec = np.column_stack((valMeta[:, 0], spectralLibData[valIndex, :])).T
-                        calMeta = spectralLibMeta[calIndex, :]
-                        calSpec = np.column_stack((calMeta[:, 0], spectralLibData[calIndex, :])).T
+                        valMeta = np.vstack((valMeta, spectralLibMeta[valIndex, :]))
+                        calMeta = np.vstack((calMeta, spectralLibMeta[calIndex, :]))
+                        inValSpec = np.hstack((spectralLibName[valIndex, :], spectralLibData[valIndex, :]))
+                        inCalSpec = np.hstack((spectralLibName[calIndex, :], spectralLibData[calIndex, :]))
+                        valSpec = np.vstack((valSpec, inValSpec))
+                        calSpec = np.vstack((calSpec, inCalSpec))
+                    offset = offset + pixelCount
+                    print offset
                 else:  # If there is no data for this polygon skip to the next one
                     continue
-            offset = offset + spectraCount
             print 'Done extracting ', spectraCount, ' spectra'
 
 # Create new output files
@@ -155,9 +167,9 @@ valLibMeta = file(outLoc + 'Combined Single Date\\' + dateTag + '_spectral_libra
 
 # Get together data and headers
 headerOutSpec = 'Flightline, Date, PolygonName, X, Y,' + ','.join(map(str, imgFile.indexes))
-headerOutMeta = ','.join(headers)
+headerOutMeta = 'Flightline, Date, PolygonName, X, Y,' + ','.join(headers)
 allSpec = np.hstack((spectralLibName, spectralLibData))
-allMeta = []
+allMeta = spectralLibMeta
 
 # Save spectral libraries from all flightlines
 np.savetxt(fileOutSpec, allSpec, header=headerOutSpec, fmt='%s', delimiter=",")
