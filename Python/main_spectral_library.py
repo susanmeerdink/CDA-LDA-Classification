@@ -111,7 +111,7 @@ for fl in flList:  # loop through flightline files to find specific date
                 test = np.count_nonzero(polygonMask)  # Get the number of elements that are not zero
                 if test > 0:  # If there is data for this polygon assign the data
                     indices = np.nonzero(polygonMask)
-                    for i in range(0, len(indices)):  #
+                    for i in range(0, len(indices[0])):  #
                         x = indices[0][i]
                         y = indices[1][i]
                         window = ((x, x + 1), (y, y + 1))
@@ -125,8 +125,6 @@ for fl in flList:  # loop through flightline files to find specific date
                             spectralLibData = np.vstack((spectralLibData, pixel))
                             spectralLibName = np.vstack((spectralLibName, inName))
                             spectralLibMeta = np.vstack((spectralLibMeta, inMeta))
-                        else:  # If the values are all zero move on to next polygon
-                            break
 
                     if pixelCount > 0:  # Split spectra into training and validation libraries
                         # Using Proportional Limit of 50% for smaller polygons and for
@@ -136,11 +134,11 @@ for fl in flList:  # loop through flightline files to find specific date
 
                         # Separate into validation/calibration
                         if propLimit * pixelCount < 10:  # If it is a small polygon, use proportional limit
-                            valIndex = random.sample(xrange(0, pixelCount), int(round(propLimit * pixelCount)))
+                            calIndex = random.sample(xrange(0, pixelCount), int(round(propLimit * pixelCount)))
                         else:  # If it is a large polygon use absolute limit
-                            valIndex = random.sample(xrange(0, pixelCount), absoLimit)
+                            calIndex = random.sample(xrange(0, pixelCount), absoLimit)
                         fullIndex = range(0, pixelCount)
-                        calIndex = list(Set(fullIndex).difference(valIndex))
+                        valIndex = list(Set(fullIndex).difference(calIndex))
                         valIndex = [x + offset for x in valIndex]
                         calIndex = [x + offset for x in calIndex]
                         valMeta = np.vstack((valMeta, spectralLibMeta[valIndex, :]))
