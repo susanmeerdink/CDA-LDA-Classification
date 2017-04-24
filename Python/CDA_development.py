@@ -8,10 +8,10 @@ outLocation = 'F:\\Classification-Products\\3 - CDA Development\\'
 dateTag = '140416'
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn import linear_model
+from sklearn import linear_model, metrics
+from sklearn.model_selection import cross_val_predict, cross_val_score, ShuffleSplit
 import numpy as np
-import random
-from sets import Set
+import matplotlib.pyplot as plt
 
 # Read in spectra and metadata files
 libSpecCalFile = libLocation + dateTag + '_transformed_spectral_library_spectra.csv'
@@ -61,38 +61,27 @@ wavelengths = [365.913666,  375.577667,  385.246674,  394.919647,  404.596649,  
 
 # Develop canonical discriminant variables
 clf = LinearDiscriminantAnalysis()  # http://scikit-learn.org/stable/modules/generated/sklearn.discriminant_analysis.LinearDiscriminantAnalysis.html#sklearn.discriminant_analysis.LinearDiscriminantAnalysis
-numIterations = 10
-cdaValues = np.empty([24, 224])
-cdaResults = np.empty([numIterations, 4])  # Array for intercept, slope, r2, and rmse
-for i in range(0, numIterations):
-    internalCalIndex = random.sample(xrange(0, spectraCal.shape[0]), int(round(0.7 * spectraCal.shape[0])))  # Select 70% of sample for internal calibration and development of canonical variables
-    internalValIndex = list(Set(range(0, spectraCal.shape[0])).difference(internalCalIndex))
-    calX = spectraCal[internalCalIndex, :]
-    calY = np.array(metaCal[internalCalIndex, 14]).astype(np.int)
-    valX = spectraCal[internalValIndex, :]
-    valY = np.array(metaCal[internalValIndex, 14]).astype(np.int)
-    clf.fit(calX, calY)
-    predictResults = clf.predict(valX)
-    cdaValues = np.add(cdaValues, clf.coef_)
+cdaResults = np.empty([1, 4])  # Array for intercept, slope, r2, and rmse
+clf.fit(spectraCal, metaCal[:, 14].astype(np.int))
+cdaScore = clf.coef_
+cdaPredict = clf.predict(spectraCal)
 
-    # Calculate results from CDA development
-    regr = linear_model.LinearRegression()
-    linearResults = regr.fit(valY.reshape(len(valY), 1), predictResults.reshape(len(predictResults), 1), sample_weight=None)  # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
-    cdaResults[i, 0] = linearResults.intercept_
-    cdaResults[i, 1] = linearResults.coef_
-    cdaResults[i, 2] = linearResults.score(valY.reshape(len(valY), 1), predictResults.reshape(len(predictResults), 1), sample_weight=None)
-    cdaResults[i, 3] = np.mean((regr.predict(valY.reshape(len(valY), 1)) - predictResults.reshape(len(predictResults), 1)) ** 2)
-
-avgCDA = cdaValues / numIterations
-valResults = clf.predict(spectraVal)
+# Calculate results from CDA development
 regr = linear_model.LinearRegression()
-linearResults = regr.fit(metaVal[:, 14].reshape(len(metaVal[:, 14]), 1), valResults.reshape(len(valResults), 1))  # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
-print linearResults.score(metaVal[:, 14].reshape(len(metaVal[:, 14]), 1), valResults.reshape(len(valResults), 1))
-tempLib = np.dot(spectraVal, avgCDA.T)
+x = metaVal[:, 14].astype(np.int).reshape(len(metaVal[:, 14]), 1)
+y = cdaPredict.reshape(len(cdaPredict), 1)
+linearResults = regr.fit(x, y)  # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
+plt.scatter(metaVal[:, 14].astype(np.int), cdaPredict)
+plt.plot(metaVal[:, 14].astype(np.int), regr.predict(x))
+plt.show()
+cdaResults[0, 0] = linearResults.intercept_  # Intercept
+cdaResults[0, 1] = linearResults.coef_  # Slope
+cdaResults[0, 2] = linearResults.score(x, cdaPredict.reshape(len(cdaPredict), 1))  # R2
+cdaResults[0, 3] = np.mean(regr.predict(x - cdaPredict.reshape(len(cdaPredict), 1)) ** 2)  # RMSE
 
 # Save Canonical Variables to Text File
 outCDA = file(outLocation + dateTag + '_CDA_spectral_library_spectra.csv', 'wb')
-np.savetxt(outCDA, avgCDA, fmt='%s', delimiter=',')
+np.savetxt(outCDA, cdaScore, fmt='%s', delimiter=',')
 outCDA.close()
 
 # Save linear regression results from Canonical Variables to Text File
