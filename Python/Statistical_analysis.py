@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------------------------------
 # Inputs
 libLocation = 'F:\\Classification-Products\\1 - Spectral Library\\Combined Single Date\\'
-outLocation = 'F:\\Classification-Products\\2 - Statistical Analysis\\'
+outLocation = 'F:\\Classification-Products\\2 - Statistical Analysis\\Combined Single Date\\'
 dateTag = '140416'
 
 # Import Modules
@@ -102,14 +102,14 @@ with np.errstate(all='ignore'):  # zero values in spectra will produce error, ig
     spectraTransformVal[np.isneginf(spectraTransformVal)] = 0
 
 # Run multiple anova on new transformed dataset
-dominant = metadata[:, 13]
+dominant = metadata[:, 14]
 listDominant = np.unique(dominant)  # Next code is based on the fact there are 24 classes
 anovaResults = np.empty([224, 2])
 tukeyResults = np.empty([0, 8])
 outTukey = file(outLocation + dateTag + '_tukeyhsd_results.csv', 'wb')
 for w in range(0, 224):
     if any(spectraTransform[:, w]):
-        anovaResults[w, 0], anovaResults[w, 1] = scipy.stats.f_oneway(
+        anovaResults[w, 0], anovaResults[w, 1] = scipy.stats.f_oneway(  # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.f_oneway.html
                                         spectraTransform[np.where(dominant == listDominant[0])[0], w],
                                         spectraTransform[np.where(dominant == listDominant[1])[0], w],
                                         spectraTransform[np.where(dominant == listDominant[2])[0], w],
@@ -132,8 +132,7 @@ for w in range(0, 224):
                                         spectraTransform[np.where(dominant == listDominant[19])[0], w],
                                         spectraTransform[np.where(dominant == listDominant[20])[0], w],
                                         spectraTransform[np.where(dominant == listDominant[21])[0], w],
-                                        spectraTransform[np.where(dominant == listDominant[22])[0], w],
-                                        spectraTransform[np.where(dominant == listDominant[23])[0], w])
+                                        spectraTransform[np.where(dominant == listDominant[22])[0], w])
         # If the anova turns back a pvalue < 0.05, do multicomparison to figure out what samples are different
         if anovaResults[w, 1] < 0.05:
             mc = MultiComparison(spectraTransform[:, w], dominant)  # http://statsmodels.sourceforge.net/0.6.0/_modules/statsmodels/stats/multicomp.html
@@ -143,7 +142,7 @@ for w in range(0, 224):
             tukeyResults = np.vstack((tukeyResults, inResults))
 
 # Set up csv file to output statistical results
-outStats = file(outLocation + dateTag + '_statistical_analysis.csv', 'a')  # Opening in append mode
+outStats = file(outLocation + dateTag + '_statistical_analysis.csv', 'wb')  # Opening in append mode
 row1 = np.hstack(('normal distribution p value for original spectra', normalStats))
 row2 = np.hstack(('kurtosis p value for original spectra', kurtosisStats))
 row3 = np.hstack(('skew p value for original spectra', skewStats))
