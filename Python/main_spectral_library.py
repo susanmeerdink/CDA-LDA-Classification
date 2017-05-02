@@ -3,8 +3,8 @@
 # This python code is the main script for development of spectral libraries
 # --------------------------------------------------------------------------------------------------------------------
 # Inputs
-polyLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_withMeta'
-metaLocation = 'F:\\Classification-Products\\2016_08_15_reference_polygons_catalog.csv'
+polyLocation = 'F:\\Classification-Products\\2017_05_01_reference_polygons_withMeta'
+metaLocation = 'F:\\Classification-Products\\2017_05_01_reference_polygons_catalog.csv'
 dirLocation = 'F:\\Image-To-Image-Registration\\AVIRIS\\*'  # File location for AVIRIS or AVIRIS+MASTER that contains all flightlines
 outLoc = 'F:\\Classification-Products\\1 - Spectral Library\\'  # Ouput file location for figures generated from analysis
 dateTag = '140416'
@@ -24,6 +24,7 @@ import pyproj
 from functools import partial
 import random
 from sets import Set
+from statsmodels import robust
 
 # Open shapefile and transform to appropriate coordinate system
 print "Opening reference polygons from " + polyLocation
@@ -41,7 +42,7 @@ metadata = np.loadtxt(metaLocation, dtype=object, delimiter=',')  # Load in meta
 headers = metadata[0, :]  # save headers separate of metadata
 headers = np.char.strip(headers.astype(str))  # remove whitespace from headers
 metadata = np.delete(metadata, 0, 0)  # remove the headers
-polyIndex = metadata[:, (np.where(headers == 'Polygon_ID')[0][0])]  # pull out what class to stratify sampling by
+polyIndex = metadata[:, (np.where(headers == 'PolyID')[0][0])]  # pull out what class to stratify sampling by
 
 # Plot reference polygons
 # cm = plt.get_cmap('RdBu')
@@ -102,12 +103,12 @@ for fl in flList:  # loop through flightline files to find specific date
 
             for idx in range(0, len(polygons)):  # Loop through polygons
                 polyIn = polygons[idx]
-                polyName = polyCRS[idx]['properties']['Polygon_ID']
+                polyName = polyCRS[idx]['properties']['PolyID']
                 pixelCount = 0
 
                 # Create Mask that has 1 for locations with polygons and 0 for non polygon locations
                 polygonMask = rasterio.features.rasterize([(polyIn, 1)], out_shape=imgFile.shape,
-                                                          transform=imgFile.transform, all_touched=True)
+                                                          transform=imgFile.transform, all_touched=False)
                 test = np.count_nonzero(polygonMask)  # Get the number of elements that are not zero
                 if test > 0:  # If there is data for this polygon assign the data
                     indices = np.nonzero(polygonMask)
@@ -127,6 +128,25 @@ for fl in flList:  # loop through flightline files to find specific date
                             spectralLibMeta = np.vstack((spectralLibMeta, inMeta))
 
                     if pixelCount > 0:  # Split spectra into training and validation libraries
+                        # Pull out bad spectra
+                        # print spectralLibMeta[offset+1, 2]
+                        # fullIndex = range(offset, pixelCount + offset)
+                        # mad = robust.mad(spectralLibData[fullIndex, :], c=1)  # http://www.statsmodels.org/stable/generated/statsmodels.robust.scale.mad.html#statsmodels.robust.scale.mad
+                        # diff = np.zeros(spectralLibData[fullIndex,:].shape)
+                        # index = np.where(spectralLibData[fullIndex, :] > (mad * 3) + np.median(spectralLibData[fullIndex, :], axis=0))
+                        # diff[index[0], index[1]] = 1
+                        # index = np.where(spectralLibData[fullIndex, :] < np.median(spectralLibData[fullIndex, :], axis=0) - (mad * 3))
+                        # diff[index[0], index[1]] = 1
+                        # sumArray = np.sum(diff, axis=1)
+                        # outlierIndex = np.where(sumArray > 112)
+                        # outlierIndex = [x + offset for x in outlierIndex]
+
+                        # spectralLibData = np.delete(spectralLibData, outlierIndex[0], axis=0)
+                        # spectralLibMeta = np.delete(spectralLibMeta, outlierIndex[0], axis=0)
+                        # spectralLibName = np.delete(spectralLibName, outlierIndex[0], axis=0)
+                        # pixelCount = pixelCount - len(outlierIndex[0])
+                        # spectraCount = spectraCount - len(outlierIndex[0])
+
                         # Using Proportional Limit of 50% for smaller polygons and for
                         # Absolute Limit of 10 spectra for larger polygons (Roth et al. 2012)
                         propLimit = 0.5
