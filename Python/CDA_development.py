@@ -82,6 +82,8 @@ cdaScore = clf.coef_
 cdaPredict = clf.predict(spectraVal)
 print clf.score(spectraCal, metaCal[:, 14].astype(np.int))
 print clf.explained_variance_ratio_
+calCDA = clf.transform(spectraCal)
+valCDA = clf.transform(spectraVal)
 
 # Calculate results from CDA development
 regr = linear_model.LinearRegression()
@@ -96,6 +98,13 @@ cdaResults[0, 0] = linearResults.intercept_  # Intercept
 cdaResults[0, 1] = linearResults.coef_  # Slope
 cdaResults[0, 2] = linearResults.score(x, cdaPredict.reshape(len(cdaPredict), 1))  # R2
 cdaResults[0, 3] = np.mean(regr.predict(x - cdaPredict.reshape(len(cdaPredict), 1)) ** 2)  # RMSE
+
+# LDA Classification
+clf = LinearDiscriminantAnalysis()
+clf.fit(calCDA, metaCal[:, 14].astype(np.int))
+ldaPredict = clf.predict(valCDA)
+plt.scatter(metaVal[:, 14].astype(np.int), ldaPredict)
+plt.show()
 
 # Save Canonical Variables to Text File
 outCDA = file(outLocation + dateTag + '_CDA_spectral_library_spectra.csv', 'wb')
