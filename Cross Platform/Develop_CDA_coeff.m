@@ -9,24 +9,24 @@
 
 %INPUTS:
 %inlibfilebase: a string or string variable name of the spectral library file; must include path name.
-directory = 'I:\Classification-Products\Combined\1 - Spectral Library\'; %Set directory
+directory = 'F:\Classification-Products\1 - Spectral Library\Combined Single Date\'; %Set directory
 
-filename = 'f131125_FL02&FL03_AVIRIS_spectral_library'; %Set filename
+filename = '140416_spectral_library'; %Set filename
 
-inlibfilebaseTrainSpec = strcat(directory,filename,'_spectra_calibration'); %set path for training library
-inlibfilebaseTrainMeta = strcat(directory,filename,'_metadata_calibration'); %set path for training library
-inlibfilebaseValSpec = strcat(directory,filename,'_spectra_validation'); %set path for validation library
-inlibfilebaseValMeta = strcat(directory,filename,'_metadata_validation'); %set path for validation library
+inlibfilebaseTrainSpec = strcat(directory,filename,'_calibration_spectra'); %set path for training library
+inlibfilebaseTrainMeta = strcat(directory,filename,'_calibration_metadata'); %set path for training library
+inlibfilebaseValSpec = strcat(directory,filename,'_validation_spectra'); %set path for validation library
+inlibfilebaseValMeta = strcat(directory,filename,'_validation_metadata'); %set path for validation library
 
 % read in training library
 metadata_Train = readtable(strcat(inlibfilebaseTrainMeta,'.csv'));
 spectra_Train = readtable(strcat(inlibfilebaseTrainSpec,'.csv'),'ReadVariableNames',0);
-outlib_goodbands_Train = cell2mat(table2cell(spectra_Train(:,2:225)));
+outlib_goodbands_Train = cell2mat(table2cell(spectra_Train(2:end,6:229)));
 
 % read in validation library
 metadata_Val = readtable(strcat(inlibfilebaseValMeta,'.csv'));
 spectra_Val = readtable(strcat(inlibfilebaseValSpec,'.csv'),'ReadVariableNames',0);
-outlib_goodbands_Val = cell2mat(table2cell(spectra_Val(:,2:225)));
+outlib_goodbands_Val = cell2mat(table2cell(spectra_Val(2:end,6:229)));
 
 %Other Variables:
 bbl = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0];
@@ -41,12 +41,10 @@ goodbandind = find(bbl);
 % validlib: Your validation library read in using ReadSpecLib_wfullmeta.m
 % valid_group: pull out the group from the metadata (species, etc)
 trainlib = outlib_goodbands_Train(:,goodbandind);
-train_group = cell2mat(table2cell(metadata_Train(:,12))); %Pull out species for grouping - it is column 9 in metadata table
-%train_group = table2cell(metadata_Train(:,12)); %Pull out species for grouping - it is column 9 in metadata table
-validlib = outlib_goodbands_Val(:,goodbandind);
-valid_group = cell2mat(table2cell(metadata_Val(:,12)));%Pull out species for grouping - it is column 9 in metadata table
-%valid_group = table2cell(metadata_Val(:,12));%Pull out species for grouping - it is column 9 in metadata table
+train_group = cell2mat(table2cell(metadata_Train(:,15))); %Pull out species for grouping 
 
+validlib = outlib_goodbands_Val(:,goodbandind);
+valid_group = cell2mat(table2cell(metadata_Val(:,15)));%Pull out species for grouping 
 
 % OUTPUTS:
 % accstats: accuracy stats (overall, cappa, error matrix, producers/users, valid class(what it was classified as), valid group (truth))
@@ -55,6 +53,11 @@ valid_group = cell2mat(table2cell(metadata_Val(:,12)));%Pull out species for gro
 
 % FUNCTION:
 [accstats,cdastats,canon_vars_Train] = CDA_manova(trainlib,train_group,validlib,valid_group);
+
+% PLOT:
+input = validlib * cdastats.eigenvec(:,1:23); 
+valid_class = classify(input,canon_vars_Train,train_group);
+scatter(valid_group, valid_class)
 
 %% Run writeCDAvars.m
 % This step creates a .csv file with the CDA coefficients
