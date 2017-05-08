@@ -3,8 +3,8 @@
 # This python code will develop canonical discriminant analysis coefficients/eigenvectors for spectral library
 # --------------------------------------------------------------------------------------------------------------------
 # Inputs
-libLocation = 'F:\\Classification-Products\\2 - Statistical Analysis\\'  # Uses Log Transformed spectra
-outLocation = 'F:\\Classification-Products\\3 - CDA Development\\'
+libLocation = 'F:\\Classification-Products\\2 - Statistical Analysis\\Combined Single Date\\'  # Uses Log Transformed spectra
+outLocation = 'F:\\Classification-Products\\3 - CDA Development\\Combined Single Date\\'
 dateTag = '140416'
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -76,22 +76,22 @@ spectraVal = np.delete(spectraVal, np.where(bbl == 0)[0], 1)  # remove bad bands
 
 # Develop canonical discriminant variables
 clf = LinearDiscriminantAnalysis()  # http://scikit-learn.org/stable/modules/generated/sklearn.discriminant_analysis.LinearDiscriminantAnalysis.html#sklearn.discriminant_analysis.LinearDiscriminantAnalysis
-clf.fit(spectraCal, metaCal[:, 14].astype(np.int))
+clf.fit(spectraCal, metaCal[:, 15].astype(np.int))
 cdaDecision = clf.decision_function(spectraVal)
 cdaScore = clf.coef_
 cdaPredict = clf.predict(spectraVal)
-print clf.score(spectraCal, metaCal[:, 14].astype(np.int))
+print clf.score(spectraCal, metaCal[:, 15].astype(np.int))
 print clf.explained_variance_ratio_
 calCDA = clf.transform(spectraCal)
 valCDA = clf.transform(spectraVal)
 
 # Calculate results from CDA development
 regr = linear_model.LinearRegression()
-x = metaVal[:, 14].astype(np.int).reshape(len(metaVal[:, 14]), 1)
+x = metaVal[:, 15].astype(np.int).reshape(len(metaVal[:, 15]), 1)
 y = cdaPredict.reshape(len(cdaPredict), 1)
 linearResults = regr.fit(x, y)  # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
-plt.scatter(metaVal[:, 14].astype(np.int), cdaPredict)
-plt.plot(metaVal[:, 14].astype(np.int), regr.predict(x))
+plt.scatter(metaVal[:, 15].astype(np.int), cdaPredict)
+plt.plot(metaVal[:, 15].astype(np.int), regr.predict(x))
 plt.show()
 cdaResults = np.empty([1, 4])  # Array for intercept, slope, r2, and rmse
 cdaResults[0, 0] = linearResults.intercept_  # Intercept
@@ -101,9 +101,9 @@ cdaResults[0, 3] = np.mean(regr.predict(x - cdaPredict.reshape(len(cdaPredict), 
 
 # LDA Classification
 clf = LinearDiscriminantAnalysis()
-clf.fit(calCDA, metaCal[:, 14].astype(np.int))
+clf.fit(calCDA, metaCal[:, 15].astype(np.int))
 ldaPredict = clf.predict(valCDA)
-plt.scatter(metaVal[:, 14].astype(np.int), ldaPredict)
+plt.scatter(metaVal[:, 15].astype(np.int), ldaPredict)
 plt.show()
 
 # Save Canonical Variables to Text File
