@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import rasterio.plot
 
 # Import CDA coefficients
-libSpecCalFile = libLocation + dateTag + '_CDA_spectral_library_spectra.csv'
+libSpecCalFile = libLocation + dateTag + '_CDA_coefficients.csv'
 cda = np.loadtxt(libSpecCalFile, dtype=object, delimiter=',')  # Load in spectra - skips first line
 cda = cda.astype(np.double)  # convert from string array to double array
 
@@ -27,9 +27,8 @@ bbl = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0])
 
-# Find image files and extract spectra using reference polygons
+# Find image files
 flList = ['FL02']  # 'FL02', 'FL03', 'FL04', 'FL05', 'FL06', 'FL07', 'FL08', 'FL09', 'FL10', 'FL11'
-offset = 0  # counter used to pull out  validation and calibration
 for fl in flList:  # loop through flightline files to find specific date
     imageLocation = dirLocation + fl + '\\6 - Spectral Correction Files\\*' + dateTag + '*'
     for name in glob.glob(imageLocation):  # Ignore header files
@@ -43,19 +42,31 @@ for fl in flList:  # loop through flightline files to find specific date
             newData = np.empty([23, imgFile.height, imgFile.width])
 
             # Loop through columns of image and apply CDA coefficients
-            for col in range(0, imgFile.width):
-                window = ((0, imgFile.height), (col, col + 1))
+            # for col in range(0, imgFile.width):
+            #     window = ((0, imgFile.height), (col, col + 1))
+            #     origData = imgFile.read(window=window, masked=False, boundless=True)  # Returns spectra as bands x width x height
+            #     origData = np.squeeze(origData)  # returns bands x height
+            #     origData = np.delete(origData, np.where(bbl == 0)[0], 0)  # remove bad bands
+            #     with np.errstate(all='ignore'):  # zero values in spectra will produce error, ignore them
+            #         transData = np.log(origData)  # Transform image data using log (for normal distribution)
+            #         transData[np.isneginf(transData)] = 0
+            #     newData[:, :, col] = np.dot(cda, transData)
+
+            # Loop through row of image and apply CDA coefficients
+            for row in range(0, imgFile.height):
+                print row
+                window = ((row, row + 1), (0, imgFile.width))
                 origData = imgFile.read(window=window, masked=False, boundless=True)  # Returns spectra as bands x width x height
-                origData = np.squeeze(origData)  # returns bands x height
+                origData = np.squeeze(origData)  # returns bands x width
                 origData = np.delete(origData, np.where(bbl == 0)[0], 0)  # remove bad bands
                 with np.errstate(all='ignore'):  # zero values in spectra will produce error, ignore them
                     transData = np.log(origData)  # Transform image data using log (for normal distribution)
                     transData[np.isneginf(transData)] = 0
-                newData[:, :, col] = np.dot(cda, transData)
+                newData[:, row, :] = np.dot(cda, transData)
 
-            fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
-            plt.imshow(newData[1,:,:])
-            plt.show()
+            # fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
+            # plt.imshow(newData[1,:,:])
+            # plt.show()
 
             # Save new data into raster file
             print 'Writing data for ' + newImageLocation
