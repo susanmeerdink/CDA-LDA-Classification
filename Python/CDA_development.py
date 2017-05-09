@@ -80,8 +80,6 @@ clf.fit(spectraCal, metaCal[:, 15].astype(np.int))
 cdaDecision = clf.decision_function(spectraVal)
 cdaScore = clf.coef_
 cdaPredict = clf.predict(spectraVal)
-print clf.score(spectraCal, metaCal[:, 15].astype(np.int))
-print clf.explained_variance_ratio_
 calCDA = clf.transform(spectraCal)
 valCDA = clf.transform(spectraVal)
 
@@ -92,32 +90,56 @@ y = cdaPredict.reshape(len(cdaPredict), 1)
 linearResults = regr.fit(x, y)  # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
 plt.scatter(metaVal[:, 15].astype(np.int), cdaPredict)
 plt.plot(metaVal[:, 15].astype(np.int), regr.predict(x))
-plt.show()
-cdaResults = np.empty([1, 4])  # Array for intercept, slope, r2, and rmse
+plt.ylabel('Predicted')
+plt.xlabel('Observed')
+plt.title(dateTag)
+plt.ylim([0, 25])
+plt.xlim([0, 25])
+plt.savefig(outLocation + dateTag + '_CDA_Pred_v_Obs.png')
+cdaResults = np.empty([1, 4 + clf.explained_variance_ratio_.shape[0]])  # Array for intercept, slope, r2, and rmse
 cdaResults[0, 0] = linearResults.intercept_  # Intercept
 cdaResults[0, 1] = linearResults.coef_  # Slope
 cdaResults[0, 2] = linearResults.score(x, cdaPredict.reshape(len(cdaPredict), 1))  # R2
 cdaResults[0, 3] = np.mean(regr.predict(x - cdaPredict.reshape(len(cdaPredict), 1)) ** 2)  # RMSE
+cdaResults[0, 4:(clf.explained_variance_ratio_.shape[0]+4)] = clf.explained_variance_ratio_  # Percent of variation explained
 
-# LDA Classification
-clf = LinearDiscriminantAnalysis()
-clf.fit(calCDA, metaCal[:, 15].astype(np.int))
-ldaPredict = clf.predict(valCDA)
-plt.scatter(metaVal[:, 15].astype(np.int), ldaPredict)
-plt.show()
+# Save Calibration CDA Transformed Libraries
+headerOutSpec = 'Flightline, Date, PolygonName, X, Y,' + ','.join(map(str, range(1, 24)))
+allOut = np.hstack((metaSpecCal, calCDA))
+outCDA = file(outLocation + dateTag + '_CDA_spectral_library_calibration_spectra.csv', 'wb')
+np.savetxt(outCDA, allOut, header=headerOutSpec, fmt='%s', delimiter=',')
+outCDA.close()
+headerOutMeta = '# Flightline, Date, PolygonName, X, Y, FID, PolyID, Orig_Name, per_imperv, Class, form, duration, ' \
+                'leafform, PFT, Dominant, DomCode, CommonName, Genus, Species, Notes, Latitude, Longitude, Elevation,' \
+                'Aspect, Slope, Number of Pixels, Source'
+outCDA = file(outLocation + dateTag + '_CDA_spectral_library_calibration_metadata.csv', 'wb')
+np.savetxt(outCDA, metaCal, header=headerOutMeta, fmt='%s', delimiter=',')
+outCDA.close()
+
+# Save Validation CDA Transformed Libraries
+allOut = np.hstack((metaSpecVal, valCDA))
+outCDA = file(outLocation + dateTag + '_CDA_spectral_library_validation_spectra.csv', 'wb')
+np.savetxt(outCDA, allOut, header=headerOutSpec, fmt='%s', delimiter=',')
+outCDA.close()
+outCDA = file(outLocation + dateTag + '_CDA_spectral_library_validation_metadata.csv', 'wb')
+np.savetxt(outCDA, metaVal, header=headerOutMeta, fmt='%s', delimiter=',')
+outCDA.close()
 
 # Save Canonical Variables to Text File
-outCDA = file(outLocation + dateTag + '_CDA_spectral_library_spectra.csv', 'wb')
+outCDA = file(outLocation + dateTag + '_CDA_coefficients.csv', 'wb')
 np.savetxt(outCDA, cdaScore, fmt='%s', delimiter=',')
 outCDA.close()
 
 # Save Canonical Variables to Text File
-outCDA = file(outLocation + dateTag + '_predict_confidence_scores.csv', 'wb')
-np.savetxt(outCDA, cdaDecision, fmt='%s', delimiter=',')
-outCDA.close()
+# outCDA = file(outLocation + dateTag + '_predict_confidence_scores.csv', 'wb')
+# np.savetxt(outCDA, cdaDecision, fmt='%s', delimiter=',')
+# outCDA.close()
 
 # Save linear regression results from Canonical Variables to Text File
 outCDA = file(outLocation + dateTag + '_CDA_development_results.csv', 'wb')
-cdaWrite = np.vstack((np.array(['Intercept', 'Slope', 'R^2', 'RMSE']), cdaResults))
+header = np.array(['Intercept', 'Slope', 'R^2', 'RMSE', '%Var1', '%Var2', '%Var3', '%Var4', '%Var5', '%Var6', '%Var7',
+                   '%Var8', '%Var9', '%Var10', '%Var11', '%Var12', '%Var13', '%Var14', '%Var15', '%Var16', '%Var17',
+                   '%Var18', '%Var19', '%Var20', '%Var21', '%Var22'])
+cdaWrite = np.vstack((header, cdaResults))
 np.savetxt(outCDA, cdaWrite, fmt='%s', delimiter=',')
 outCDA.close()
