@@ -104,7 +104,7 @@ cdaResults[0, 3] = np.mean(regr.predict(x - cdaPredict.reshape(len(cdaPredict), 
 cdaResults[0, 4:(clf.explained_variance_ratio_.shape[0]+4)] = clf.explained_variance_ratio_  # Percent of variation explained
 
 # Save Calibration CDA Transformed Libraries
-headerOutSpec = 'Flightline, Date, PolygonName, X, Y,' + ','.join(map(str, range(1, 24)))
+headerOutSpec = 'Flightline, Date, PolygonName, X, Y,' + ','.join(map(str, range(1, 23)))
 allOut = np.hstack((metaSpecCal, calCDA))
 outCDA = file(outLocation + dateTag + '_CDA_spectral_library_calibration_spectra.csv', 'wb')
 np.savetxt(outCDA, allOut, header=headerOutSpec, fmt='%s', delimiter=',')

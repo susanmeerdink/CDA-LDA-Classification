@@ -37,9 +37,9 @@ for fl in flList:  # loop through flightline files to find specific date
             imgFile = rasterio.open(name, 'r')  # Open raster image
             shortName = name.split('\\')[-1]  # Get file name
             newImageLocation = dirLocation + fl + '\\7 - CDA Files\\' + shortName + '_CDA'
-            outImgFile = rasterio.open(newImageLocation, 'w', width=imgFile.width, height=imgFile.height, count=23,
+            outImgFile = rasterio.open(newImageLocation, 'w', width=imgFile.width, height=imgFile.height, count=22,
                                        transform=imgFile.transform, crs=imgFile.crs, driver='ENVI', dtype='float64')
-            newData = np.empty([23, imgFile.height, imgFile.width])
+            newData = np.empty([22, imgFile.height, imgFile.width])
 
             # Loop through columns of image and apply CDA coefficients
             # for col in range(0, imgFile.width):
@@ -62,7 +62,7 @@ for fl in flList:  # loop through flightline files to find specific date
                 with np.errstate(all='ignore'):  # zero values in spectra will produce error, ignore them
                     transData = np.log(origData)  # Transform image data using log (for normal distribution)
                     transData[np.isneginf(transData)] = 0
-                newData[:, row, :] = np.dot(cda, transData)
+                newData[:, row, :] = np.dot(cda[0:22, :], transData)
 
             # fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
             # plt.imshow(newData[1,:,:])
