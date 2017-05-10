@@ -12,6 +12,7 @@ import rasterio
 import numpy as np
 import matplotlib.pyplot as plt
 import rasterio.plot
+import gc
 
 # Import CDA coefficients
 libSpecCalFile = libLocation + dateTag + '_CDA_coefficients.csv'
@@ -54,15 +55,22 @@ for fl in flList:  # loop through flightline files to find specific date
 
             # Loop through row of image and apply CDA coefficients
             for row in range(0, imgFile.height):
-                print row
+                gc.collect()
+                if row == int(imgFile.height*0.25):
+                    print '25% Completed'
+                if row == int(imgFile.height*0.50):
+                    print '50% Completed'
+                if row == int(imgFile.height*0.75):
+                    print '75% Completed'
                 window = ((row, row + 1), (0, imgFile.width))
                 origData = imgFile.read(window=window, masked=False, boundless=True)  # Returns spectra as bands x width x height
                 origData = np.squeeze(origData)  # returns bands x width
                 origData = np.delete(origData, np.where(bbl == 0)[0], 0)  # remove bad bands
-                with np.errstate(all='ignore'):  # zero values in spectra will produce error, ignore them
-                    transData = np.log(origData)  # Transform image data using log (for normal distribution)
-                    transData[np.isneginf(transData)] = 0
-                newData[:, row, :] = np.dot(cda[0:22, :], transData)
+                # with np.errstate(all='ignore'):  # zero values in spectra will produce error, ignore them
+                #     transData = np.log(origData)  # Transform image data using log (for normal distribution)
+                #     transData[np.isneginf(transData)] = 0
+                # newData[:, row, :] = np.dot(cda.T, transData)
+                newData[:, row, :] = np.dot(cda.T, origData)
 
             # fig, axMap = plt.subplots(num=None, figsize=(4, 3), dpi=300, facecolor='w', edgecolor='k')
             # plt.imshow(newData[1,:,:])
