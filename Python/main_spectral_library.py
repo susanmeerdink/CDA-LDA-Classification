@@ -24,6 +24,7 @@ import pyproj
 from functools import partial
 import random
 from sets import Set
+import gc
 from statsmodels import robust
 
 # Open shapefile and transform to appropriate coordinate system
@@ -102,6 +103,7 @@ for fl in flList:  # loop through flightline files to find specific date
             plt.clf()
 
             for idx in range(0, len(polygons)):  # Loop through polygons
+                gc.collect()
                 polyIn = polygons[idx]
                 polyName = polyCRS[idx]['properties']['PolyID']
                 pixelCount = 0
