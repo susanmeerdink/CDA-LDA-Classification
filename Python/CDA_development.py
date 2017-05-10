@@ -3,7 +3,8 @@
 # This python code will develop canonical discriminant analysis coefficients/eigenvectors for spectral library
 # --------------------------------------------------------------------------------------------------------------------
 # Inputs
-libLocation = 'F:\\Classification-Products\\2 - Statistical Analysis\\Combined Single Date\\'  # Uses Log Transformed spectra
+#libLocation = 'F:\\Classification-Products\\2 - Statistical Analysis\\Combined Single Date\\'  # Uses Log Transformed spectra
+libLocation = 'F:\\Classification-Products\\1 - Spectral Library\\Combined Single Date\\'  # Uses Log Transformed spectra
 outLocation = 'F:\\Classification-Products\\3 - CDA Development\\Combined Single Date\\'
 dateTag = '140416'
 
@@ -51,13 +52,16 @@ wavelengths = [365.913666,  375.577667,  385.246674,  394.919647,  404.596649,  
                  2426.743652, 2436.673584, 2446.603760, 2456.533691, 2466.453613, 2476.383545, 2486.303711, 2496.223633]
 
 # Read in metadata files
-libMetaCalFile = libLocation + dateTag + '_transformed_spectral_library_calibration_metadata.csv'
-libMetaValFile = libLocation + dateTag + '_transformed_spectral_library_validation_metadata.csv'
+# libMetaCalFile = libLocation + dateTag + '_transformed_spectral_library_calibration_metadata.csv'
+# libMetaValFile = libLocation + dateTag + '_transformed_spectral_library_validation_metadata.csv'
+libMetaCalFile = libLocation + dateTag + '_spectral_library_calibration_metadata.csv'
+libMetaValFile = libLocation + dateTag + '_spectral_library_validation_metadata.csv'
 metaCal = np.loadtxt(libMetaCalFile, dtype=object, delimiter=',')
 metaVal = np.loadtxt(libMetaValFile, dtype=object, delimiter=',')
 
 # Read in calibration spectral files
-libSpecCalFile = libLocation + dateTag + '_transformed_spectral_library_calibration_spectra.csv'
+# libSpecCalFile = libLocation + dateTag + '_transformed_spectral_library_calibration_spectra.csv'
+libSpecCalFile = libLocation + dateTag + '_spectral_library_calibration_spectra.csv'
 spectraCal = np.loadtxt(libSpecCalFile, dtype=object, delimiter=',')  # Load in spectra - skips first line
 metaSpecCal = spectraCal[:, 0:5]  # save first 5 columns of spectra separately
 spectraCal = np.delete(spectraCal, [0, 1, 2, 3, 4], 1)  # remove the 5 columns of metadata in spectra
@@ -66,7 +70,8 @@ spectraCal = np.nan_to_num(spectraCal)  # there are values that are not finite, 
 spectraCal = np.delete(spectraCal, np.where(bbl == 0)[0], 1)  # remove bad bands
 
 # Read in validation spectral files
-libSpecValFile = libLocation + dateTag + '_transformed_spectral_library_validation_spectra.csv'
+# libSpecValFile = libLocation + dateTag + '_transformed_spectral_library_validation_spectra.csv'
+libSpecValFile = libLocation + dateTag + '_spectral_library_validation_spectra.csv'
 spectraVal = np.loadtxt(libSpecValFile, dtype=object, delimiter=',')  # Load in spectra - skips first line
 metaSpecVal = spectraVal[:, 0:5]  # save first 5 columns of spectra separately
 spectraVal = np.delete(spectraVal, [0, 1, 2, 3, 4], 1)  # remove the 5 columns of metadata in spectra
@@ -78,7 +83,7 @@ spectraVal = np.delete(spectraVal, np.where(bbl == 0)[0], 1)  # remove bad bands
 clf = LinearDiscriminantAnalysis()  # http://scikit-learn.org/stable/modules/generated/sklearn.discriminant_analysis.LinearDiscriminantAnalysis.html#sklearn.discriminant_analysis.LinearDiscriminantAnalysis
 clf.fit(spectraCal, metaCal[:, 15].astype(np.int))
 cdaDecision = clf.decision_function(spectraVal)
-cdaScore = clf.coef_
+cdaScore = clf.scalings_
 cdaPredict = clf.predict(spectraVal)
 calCDA = clf.transform(spectraCal)
 valCDA = clf.transform(spectraVal)
